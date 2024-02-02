@@ -55,18 +55,20 @@ class Camera:
         - n_samples_theta (int): Number of samples in the theta dimension (polar angle), only in the northern hemisphere.
         - n_samples_phi (int): Number of samples in the phi dimension (azimuthal angle).
         """
-        # Use a non-linear distribution for theta to concentrate samples around the equator of the northern hemisphere
+        # Linear distribution for theta
         theta_values = np.linspace(0, np.pi / 2, n_samples_theta)
-        theta_weights = np.sin(theta_values)  # Weigh theta values to concentrate around pi/4
-        theta_samples = np.sort(
-            np.random.choice(theta_values, size=n_samples_theta, p=theta_weights / np.sum(theta_weights)))
 
-        # Uniformly sample phi values
-        phi_samples = np.linspace(0, 2 * np.pi, n_samples_phi)
+        for theta in theta_values:
+            # Adjust the number of phi samples based on theta to have denser sampling away from the pole
+            if theta == 0:
+                # At the pole, sample only one point
+                phi_samples = [0]
+            else:
+                # As theta increases, increase the number of phi samples
+                phi_density = int(np.ceil(n_samples_phi * np.sin(theta)))
+                phi_samples = np.linspace(0, 2 * np.pi, phi_density, endpoint=False)
 
-        for theta in theta_samples:
             for phi in phi_samples:
-                print(theta, phi)
                 camera_position = self.spherical_to_cartesian(theta, phi)
                 rotation_matrix = self.look_at(camera_position)
                 pose = Transform(rotation_matrix, camera_position, 'object', 'camera')
