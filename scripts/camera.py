@@ -45,3 +45,36 @@ class Camera:
                 pose = Transform(rotation_matrix, camera_position, 'object', 'camera')
                 yield pose
 
+    def generate_camera_poses(self, n_samples_theta, n_samples_phi):
+        """
+        Generate camera poses around the northern hemisphere of a sphere using strategic sampling.
+        This is a generator function that yields camera pose matrices one by one.
+
+        Args:
+        - radius (float): The radius of the sphere.
+        - n_samples_theta (int): Number of samples in the theta dimension (polar angle), only in the northern hemisphere.
+        - n_samples_phi (int): Number of samples in the phi dimension (azimuthal angle).
+        """
+        # Use a non-linear distribution for theta to concentrate samples around the equator of the northern hemisphere
+        theta_values = np.linspace(0, np.pi / 2, n_samples_theta)
+        theta_weights = np.sin(theta_values)  # Weigh theta values to concentrate around pi/4
+        theta_samples = np.sort(
+            np.random.choice(theta_values, size=n_samples_theta, p=theta_weights / np.sum(theta_weights)))
+
+        # Uniformly sample phi values
+        phi_samples = np.linspace(0, 2 * np.pi, n_samples_phi)
+
+        for theta in theta_samples:
+            for phi in phi_samples:
+                print(theta, phi)
+                camera_position = self.spherical_to_cartesian(theta, phi)
+                rotation_matrix = self.look_at(camera_position)
+                pose = Transform(rotation_matrix, camera_position, 'object', 'camera')
+                yield pose
+
+    def create_camera_pose_from_x(self):
+        theta, phi = np.pi / 2, 0
+        camera_position = self.spherical_to_cartesian(theta, phi)
+        rotation_matrix = self.look_at(camera_position)
+        pose = Transform(rotation_matrix, camera_position, 'object', 'camera')
+        return pose
