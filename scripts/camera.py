@@ -1,6 +1,7 @@
 import numpy as np
+from typing import Collection
 
-from transform import Transform
+from transform import Transform, Point3D
 
 
 class Camera:
@@ -9,13 +10,13 @@ class Camera:
         self.target = target
         self.up_vector = up_vector
 
-    def spherical_to_cartesian(self, theta, phi):
+    def spherical_to_cartesian(self, theta, phi) -> Point3D:
         x = self.radius * np.sin(theta) * np.cos(phi)
         y = self.radius * np.sin(theta) * np.sin(phi)
         z = self.radius * np.cos(theta)
-        return np.array([x, y, z])
+        return Point3D(x, y, z)
 
-    def look_at(self, camera_position):
+    def look_at(self, camera_position: Point3D) -> np.ndarray:
         z_axis = camera_position - self.target
         z_axis /= np.linalg.norm(z_axis)
 
@@ -37,15 +38,15 @@ class Camera:
         rotation_matrix = np.array([x_axis, y_axis, z_axis]).T
         return rotation_matrix
 
-    def generate_poses(self, n_theta, n_phi):
+    def generate_poses(self, n_theta: int, n_phi: int) -> Collection[Transform]:
         for theta in np.linspace(0, np.pi / 2, n_theta):
             for phi in np.linspace(0, 2 * np.pi, n_phi):
                 camera_position = self.spherical_to_cartesian(theta, phi)
                 rotation_matrix = self.look_at(camera_position)
-                pose = Transform(rotation_matrix, camera_position, 'object', 'camera')
-                yield pose
+                transform = Transform(rotation_matrix, camera_position, 'object', 'camera')
+                yield transform
 
-    def generate_camera_poses(self, n_samples_theta, n_samples_phi):
+    def generate_camera_poses(self, n_samples_theta: int, n_samples_phi: int) -> Collection[Transform]:
         """
         Generate camera poses around the northern hemisphere of a sphere using strategic sampling.
         This is a generator function that yields camera pose matrices one by one.
@@ -74,9 +75,9 @@ class Camera:
                 look_at_mat = Transform(rotation_matrix, camera_position, 'object', 'camera')
                 yield look_at_mat
 
-    def create_camera_pose_from_x(self):
+    def create_camera_pose_from_x(self) -> Transform:
         theta, phi = np.pi / 2, 0
         camera_position = self.spherical_to_cartesian(theta, phi)
         rotation_matrix = self.look_at(camera_position)
-        pose = Transform(rotation_matrix, camera_position, 'object', 'camera')
-        return pose
+        transform = Transform(rotation_matrix, camera_position, 'object', 'camera')
+        return transform

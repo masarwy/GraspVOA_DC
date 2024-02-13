@@ -41,7 +41,7 @@ if __name__ == '__main__':
     for look_at in look_at_generator:
         _, depth, mask = render.render_scene(mesh=obj.get_mesh(), camera_pose=look_at.get_transformation_matrix())
 
-        print(ee_extractor.extract_pose(camera_in_workspace=look_at.adjust_for_camera_pose()).to_pose())
+        print(ee_extractor(camera_in_workspace=look_at.adjust_for_camera_pose()).to_pose())
         print(look_at.adjust_for_camera_pose().to_pose())
         print('________________________________')
         image_min = depth.min()
