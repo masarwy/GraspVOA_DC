@@ -1,19 +1,26 @@
 import numpy as np
 from PIL import Image
 
+from transform import Transform
 from object import Object
 from render import Render
 from camera import Camera
+from ee_pose_extractor import EEPoseExtractor
 
 import trimesh
 
 if __name__ == '__main__':
     obj_file = 'object.obj'
     render_scene = False
-
     obj = Object(obj_file)
     camera = Camera(radius=0.3)
     render = Render(yfov=np.pi / 3.0)
+
+    workspace_in_world = Transform(rotation=np.eye(3), translation=np.array([-0.7, 0, 0]), from_frame='world',
+                                   to_frame='workspace')
+    camera_in_ee = Transform(rotation=np.eye(3), translation=np.array([0, -0.105, 0.0395]), from_frame='EE',
+                             to_frame='camera')
+    ee_extractor = EEPoseExtractor(workspace_in_world=workspace_in_world, camera_in_ee=camera_in_ee)
 
     _, _, mask = render.render_scene(mesh=obj.get_mesh(),
                                      camera_pose=camera.create_camera_pose_from_x().get_transformation_matrix())
@@ -28,11 +35,15 @@ if __name__ == '__main__':
         scene.add_geometry(axis)
         scene.show()
 
-    pose_generator = camera.generate_camera_poses(n_samples_theta=4, n_samples_phi=3)
+    look_at_generator = camera.generate_camera_poses(n_samples_theta=4, n_samples_phi=3)
 
     counter = 0
-    for pose in pose_generator:
-        _, depth, mask = render.render_scene(mesh=obj.get_mesh(), camera_pose=pose.get_transformation_matrix())
+    for look_at in look_at_generator:
+        _, depth, mask = render.render_scene(mesh=obj.get_mesh(), camera_pose=look_at.get_transformation_matrix())
+
+        print(ee_extractor.extract_pose(camera_in_workspace=look_at.adjust_for_camera_pose()).to_pose())
+        print(look_at.adjust_for_camera_pose().to_pose())
+        print('________________________________')
         image_min = depth.min()
         image_max = depth.max()
 

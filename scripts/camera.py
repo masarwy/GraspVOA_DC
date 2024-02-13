@@ -71,8 +71,8 @@ class Camera:
             for phi in phi_samples:
                 camera_position = self.spherical_to_cartesian(theta, phi)
                 rotation_matrix = self.look_at(camera_position)
-                pose = Transform(rotation_matrix, camera_position, 'object', 'camera')
-                yield pose
+                look_at_mat = Transform(rotation_matrix, camera_position, 'object', 'camera')
+                yield look_at_mat
 
     def create_camera_pose_from_x(self):
         theta, phi = np.pi / 2, 0
