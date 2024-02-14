@@ -21,7 +21,10 @@ def heuristic_driven_sampling(camera_in_ee: Transform, camera_params: dict, join
 
     probabilities = np.exp(scores) / np.sum(np.exp(scores))
 
-    selected_indices = np.random.choice(range(dist_res), size=n_samples, p=probabilities).tolist()
+    selected_indices = probabilities.argsort()[-n_samples:].tolist()
     selected_configs = [sampled_configs[i] for i in selected_indices]
+
+    # selected_indices = np.random.choice(range(dist_res), size=n_samples, p=probabilities).tolist()
+    # selected_configs = [sampled_configs[i] for i in selected_indices]
 
     return selected_configs
