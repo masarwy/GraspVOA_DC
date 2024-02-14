@@ -1,20 +1,30 @@
 import numpy as np
 from PIL import Image
+import yaml
 
-from transform import Transform
+from transform import Transform, Point3D
 from object import Object
 from render import Render
 from camera import Camera
 from ee_pose_extractor import EEPoseExtractor
+from sensor_configs_sampler import heuristic_driven_sampling
 
 import trimesh
 
 if __name__ == '__main__':
     obj_file = 'object.obj'
+
+    camera_params_file = '../data/camera_params.yaml'
+    with open(camera_params_file, 'r') as file:
+        config = yaml.safe_load(file)
+    camera_params = config['camera_params']
+    yfov = np.radians(camera_params['fov_vertical_rad'])
+    aspect_ratio = camera_params['image_width'] / camera_params['image_height']
+
     render_scene = False
     obj = Object(obj_file)
     camera = Camera(radius=0.3)
-    render = Render(yfov=np.pi / 3.0)
+    render = Render(yfov=yfov, aspectRatio=aspect_ratio)
 
     workspace_in_world = Transform(rotation=np.eye(3), translation=np.array([-0.7, 0, 0]), from_frame='world',
                                    to_frame='workspace')
@@ -24,6 +34,10 @@ if __name__ == '__main__':
 
     _, _, mask = render.render_scene(mesh=obj.get_mesh(),
                                      camera_pose=camera.create_camera_pose_from_x().get_transformation_matrix())
+    joint_limits = np.zeros((6, 2))
+    joint_limits[:, 1] = np.array([360] * 6)
+    X_s = heuristic_driven_sampling(camera_in_ee=camera_in_ee, camera_params=camera_params, joint_limits=joint_limits,
+                                    poi=Point3D(50, 50, 50))
 
     if render_scene:
         scene = trimesh.Scene()

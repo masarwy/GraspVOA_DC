@@ -1,10 +1,10 @@
 import numpy as np
 
-from transform import Transform, Pose
+from transform import Transform, Pose, Point3D
 
 
 class CameraVisibilityHeuristic:
-    def __init__(self, poi, optimal_distance, camera_params):
+    def __init__(self, poi: Point3D, optimal_distance: float, camera_params: dict):
         """
         Initialize the heuristic with parameters specific to the task.
 

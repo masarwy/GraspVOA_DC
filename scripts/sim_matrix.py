@@ -3,9 +3,11 @@ from skimage.metrics import structural_similarity as ssim
 from skimage.io import imread
 import numpy as np
 
-def load_and_preprocess_image(file_path):
+
+def load_and_preprocess_image(file_path: str) -> np.ndarray:
     image = imread(file_path)
     return image
+
 
 if __name__ == '__main__':
     file_pattern = '../data/img/di_*.png'

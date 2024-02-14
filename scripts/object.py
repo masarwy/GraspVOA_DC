@@ -4,7 +4,7 @@ from transform import Transform
 
 
 class Object:
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         self.mesh = trimesh.load(filename)
         self.mesh_center = self.mesh.centroid
         self.world_frame_pose = Transform(to_frame='object')

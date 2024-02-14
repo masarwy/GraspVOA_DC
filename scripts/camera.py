@@ -5,7 +5,7 @@ from transform import Transform, Point3D
 
 
 class Camera:
-    def __init__(self, radius, target=np.array([0, 0, 0]), up_vector=np.array([0, 0, 1])):
+    def __init__(self, radius: float, target: Point3D = Point3D(0, 0, 0), up_vector: Point3D = Point3D(0, 0, 1)):
         self.radius = radius
         self.target = target
         self.up_vector = up_vector
@@ -22,7 +22,7 @@ class Camera:
 
         # Check if the up vector and the z_axis are parallel
         if np.allclose(z_axis, self.up_vector) or np.allclose(z_axis, -self.up_vector):
-            up_vector_adjusted = np.array([self.up_vector[1], -self.up_vector[0], self.up_vector[2]])
+            up_vector_adjusted = np.array([self.up_vector.y, -self.up_vector.x, self.up_vector.z])
         else:
             up_vector_adjusted = self.up_vector
 

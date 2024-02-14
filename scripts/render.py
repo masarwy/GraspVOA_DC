@@ -3,8 +3,8 @@ import numpy as np
 
 
 class Render:
-    def __init__(self, yfov):
-        self.camera = pyrender.PerspectiveCamera(yfov=yfov)
+    def __init__(self, yfov: float, aspectRatio: float):
+        self.camera = pyrender.PerspectiveCamera(yfov=yfov, aspectRatio=aspectRatio)
 
     # returns color, depth, mask
     def render_scene(self, mesh, camera_pose):

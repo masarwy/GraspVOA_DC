@@ -38,17 +38,37 @@ class Pose:
         return self.Rx, self.Ry, self.Rz
 
 
-@dataclass
-class Point3D:
-    x: float
-    y: float
-    z: float
+class Point3D(np.ndarray):
+    def __new__(cls, x, y, z):
+        obj = np.asarray([x, y, z], dtype=float).view(cls)
+        return obj
 
-    def __iter__(self):
-        # Yield attributes in the order you want them unpacked
-        yield self.x
-        yield self.y
-        yield self.z
+    @property
+    def x(self):
+        return self[0]
+
+    @x.setter
+    def x(self, value):
+        self[0] = value
+
+    @property
+    def y(self):
+        return self[1]
+
+    @y.setter
+    def y(self, value):
+        self[1] = value
+
+    @property
+    def z(self):
+        return self[2]
+
+    @z.setter
+    def z(self, value):
+        self[2] = value
+
+    def __repr__(self):
+        return f"Point3D(x={self.x}, y={self.y}, z={self.z})"
 
 
 class Transform:
@@ -176,3 +196,14 @@ class Transform:
         rotation_matrix = Rz_matrix @ Ry_matrix @ Rx_matrix
 
         return rotation_matrix
+
+    @classmethod
+    def from_matrix(cls, matrix, from_frame='world', to_frame='object') -> 'Transform':
+        """Create a Transform object from a 4x4 transformation matrix."""
+        if matrix.shape != (4, 4):
+            raise ValueError("Matrix must be a 4x4 transformation matrix.")
+
+        rotation = matrix[:3, :3]
+        translation = matrix[:3, 3]
+
+        return cls(rotation=rotation, translation=translation, from_frame=from_frame, to_frame=to_frame)
