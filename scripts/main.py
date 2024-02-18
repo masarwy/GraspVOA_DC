@@ -12,7 +12,8 @@ from sensor_configs_sampler import heuristic_driven_sampling
 import trimesh
 
 if __name__ == '__main__':
-    obj_file = 'object.obj'
+    object_id = 'ENDSTOP'
+    obj_file = '../data/objects/' + object_id + '/object.obj'
 
     camera_params_file = '../data/camera_params.yaml'
     with open(camera_params_file, 'r') as file:
@@ -21,8 +22,9 @@ if __name__ == '__main__':
     yfov = np.radians(camera_params['fov_vertical_rad'])
     aspect_ratio = camera_params['image_width'] / camera_params['image_height']
 
-    render_scene = False
+    render_scene = True
     obj = Object(obj_file)
+    obj.rotate_x(np.pi / 2)
     camera = Camera(radius=0.3)
     render = Render(yfov=yfov, aspectRatio=aspect_ratio)
 
@@ -67,5 +69,5 @@ if __name__ == '__main__':
         # Scale to 0-255 and convert to uint8
         scaled_image = (normalized_image * 255).astype(np.uint8)
         image = Image.fromarray(scaled_image)
-        image.save(f'../data/img/di_{counter}.png')
+        image.save('../data/objects/' + object_id + f'/img/di_{counter}.png')
         counter += 1

@@ -1,0 +1,10 @@
+standard_poses:
+  upright:
+    orientation: [0, 0, 0]  # Euler angles (radians)
+    position_offset: [0, 0, 0]  # Position offset (x, y, z)
+  upside_down:
+    orientation: [3.14159, 0, 0]  # Euler angles (radians), assuming np.pi for inversion
+    position_offset: [0, 0, -1]  # Position offset (x, y, z), example value
+  lying_on_edge:
+    orientation: [0, 1.5708, 0]  # Euler angles (radians), assuming np.pi/2 for 90-degree rotation
+    position_offset: [0.5, 0, 0]
