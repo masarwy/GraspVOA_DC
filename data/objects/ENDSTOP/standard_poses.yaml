@@ -1,10 +1,21 @@
 standard_poses:
-  upright:
-    orientation: [0, 0, 0]  # Euler angles (radians)
-    position_offset: [0, 0, 0]  # Position offset (x, y, z)
-  upside_down:
-    orientation: [3.14159, 0, 0]  # Euler angles (radians), assuming np.pi for inversion
-    position_offset: [0, 0, -1]  # Position offset (x, y, z), example value
-  lying_on_edge:
-    orientation: [0, 1.5708, 0]  # Euler angles (radians), assuming np.pi/2 for 90-degree rotation
-    position_offset: [0.5, 0, 0]
+  C1:
+    probability: 0.1
+    orientation: [3.0892327760299634, 0.0, 0.0]
+    position_offset: [0.0, 0.0, 0.05115]
+  C2:
+    probability: 0.1
+    orientation: [-1.2740903539558606, 0.0, 0.0]
+    position_offset: [0.0, 0.0, 0.02851]
+  C3:
+    probability: 0.3
+    orientation: [0.0, 1.5707963267948966, 0.0]
+    position_offset: [0.0, 0.0, 0.0157]
+  C4:
+    probability: 0.4
+    orientation: [0.0, -1.5707963267948966, 0.0]
+    position_offset: [0.0, 0.0, 0.0157]
+  C5:
+    probability: 0.1
+    orientation: [1.5707963267948966, 0.0, 0.0]
+    position_offset: [0.0, 0.0, 0.03249]

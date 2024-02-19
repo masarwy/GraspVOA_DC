@@ -6,8 +6,8 @@ from transform import Transform
 
 class Object:
     def __init__(self, filename: str):
-        self.mesh = trimesh.load(filename)
-        self.elevate_mesh_to_zero()
+        self.filename = filename
+        self.mesh = trimesh.load(self.filename)
         self.mesh_center = self.mesh.centroid
         self.world_frame_pose = Transform(to_frame='object')
 
@@ -17,8 +17,9 @@ class Object:
             elevation_translation = Transform(translation=np.array([0, 0, -min_z]), to_frame='object')
             self.mesh = elevation_translation.apply_to_mesh(self.mesh)
 
-    def set_pose(self, rotation, translation):
-        self.world_frame_pose = Transform(rotation, translation, to_frame='object')
+    def set_transform(self, t: Transform):
+        self.mesh = trimesh.load(self.filename)
+        self.world_frame_pose = t
         self.apply_transform()
 
     def apply_transform(self):

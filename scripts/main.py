@@ -2,6 +2,7 @@ import numpy as np
 from PIL import Image
 import yaml
 
+from pose_belief import BeliefSpaceModel
 from transform import Transform, Point3D
 from object import Object
 from render import Render
@@ -12,8 +13,17 @@ from sensor_configs_sampler import heuristic_driven_sampling
 import trimesh
 
 if __name__ == '__main__':
+    render_scene = True
+
     object_id = 'ENDSTOP'
     obj_file = '../data/objects/' + object_id + '/object.obj'
+    poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
+
+    bm = BeliefSpaceModel(poses_file)
+    particles = bm.sample_particles(n_particles=10)
+    transforms = []
+    for category, angle, x, y, _ in particles:
+        transforms.append(Transform.from_pose(bm.particle_to_6d_pose(category, float(angle), float(x), float(y))))
 
     camera_params_file = '../data/camera_params.yaml'
     with open(camera_params_file, 'r') as file:
@@ -22,9 +32,7 @@ if __name__ == '__main__':
     yfov = np.radians(camera_params['fov_vertical_rad'])
     aspect_ratio = camera_params['image_width'] / camera_params['image_height']
 
-    render_scene = True
     obj = Object(obj_file)
-    obj.rotate_x(np.pi / 2)
     camera = Camera(radius=0.3)
     render = Render(yfov=yfov, aspectRatio=aspect_ratio)
 
@@ -33,6 +41,17 @@ if __name__ == '__main__':
     camera_in_ee = Transform(rotation=np.eye(3), translation=np.array([0, -0.105, 0.0395]), from_frame='EE',
                              to_frame='camera')
     ee_extractor = EEPoseExtractor(workspace_in_world=workspace_in_world, camera_in_ee=camera_in_ee)
+
+    for t in transforms:
+        obj.set_transform(t)
+        scene = trimesh.Scene()
+        scene.add_geometry(obj.get_mesh())
+        # Create an axis object
+        axis = trimesh.creation.axis(axis_length=1.0, origin_size=0.01)
+
+        # Add the axis object to the scene
+        scene.add_geometry(axis)
+        scene.show()
 
     _, _, mask = render.render_scene(mesh=obj.get_mesh(),
                                      camera_pose=camera.create_camera_pose_from_x().get_transformation_matrix())
