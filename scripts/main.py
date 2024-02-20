@@ -9,6 +9,7 @@ from render import Render
 from camera import Camera
 from ee_pose_extractor import EEPoseExtractor
 from sensor_configs_sampler import heuristic_driven_sampling
+from sensor_conf import read_sensor_configs
 
 import trimesh
 
@@ -17,13 +18,16 @@ if __name__ == '__main__':
 
     object_id = 'ENDSTOP'
     obj_file = '../data/objects/' + object_id + '/object.obj'
-    poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
+    obj_poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
+    sensor_poses_file = '../data/poses_and_joints.yaml'
 
-    bm = BeliefSpaceModel(poses_file)
+    sensor_p_q = read_sensor_configs(sensor_poses_file)
+
+    bm = BeliefSpaceModel(obj_poses_file)
     particles = bm.sample_particles(n_particles=10)
     transforms = []
     for category, angle, x, y, _ in particles:
-        transforms.append(Transform.from_pose(bm.particle_to_6d_pose(category, float(angle), float(x), float(y))))
+        transforms.append(Transform.from_pose_zyx(bm.particle_to_6d_pose(category, float(angle), float(x), float(y))))
 
     camera_params_file = '../data/camera_params.yaml'
     with open(camera_params_file, 'r') as file:

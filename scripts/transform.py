@@ -1,6 +1,7 @@
 import numpy as np
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, List
+from scipy.spatial.transform import Rotation as R
 
 
 @dataclass
@@ -21,6 +22,9 @@ class Pose:
         yield self.Ry
         yield self.Rz
 
+    def tolist(self) -> List[float]:
+        return [self.x, self.y, self.z, self.Rx, self.Ry, self.Rz]
+
     def translation(self) -> Tuple[float, float, float]:
         """
         Returns the translation components of the pose.
@@ -29,7 +33,7 @@ class Pose:
         """
         return self.x, self.y, self.z
 
-    def euler_angles(self) -> Tuple[float, float, float]:
+    def angles(self) -> Tuple[float, float, float]:
         """
         Returns the Euler angles of the pose.
 
@@ -92,6 +96,17 @@ class Transform:
 
         return True
 
+    def __str__(self):
+        return (f"Transform from '{self.from_frame}' to '{self.to_frame}':\n"
+                f"Rotation:\n{self.rotation}\n"
+                f"Translation: {self.translation}")
+
+    def __repr__(self):
+        return (f"Transform(rotation={self.rotation}, "
+                f"translation={self.translation}, "
+                f"from_frame='{self.from_frame}', "
+                f"to_frame='{self.to_frame}')")
+
     def inverse(self) -> 'Transform':
         inv_rotation = self.rotation.T
         inv_translation = -inv_rotation @ self.translation
@@ -138,7 +153,7 @@ class Transform:
         transformed_mesh.apply_transform(self.get_transformation_matrix())
         return transformed_mesh
 
-    def to_pose(self) -> Pose:
+    def to_pose_zyx(self) -> Pose:
         x, y, z = self.translation
 
         R = self.rotation
@@ -157,24 +172,46 @@ class Transform:
 
         return Pose(x, y, z, Rx, Ry, Rz)
 
-    @classmethod
-    def from_pose(cls, pose: Pose) -> 'Transform':
-        """
-        Create a Transform object from a pose represented by (x, y, z, Rx, Ry, Rz).
+    def to_pose_xyz(self) -> Pose:
+        x, y, z = self.translation
 
-        :param pose: Pose containing position and Euler angles (x, y, z, Rx, Ry, Rz).
-        :return: A Transform object with the corresponding rotation and translation.
-        """
-        x, y, z, Rx, Ry, Rz = pose
+        R = self.rotation
 
-        rotation_matrix = cls._euler_to_rotation_matrix(Rx, Ry, Rz)
+        singular = np.abs(R[0, 2]) > 0.99999
 
-        translation_vector = np.array([x, y, z])
+        if not singular:
+            Ry = np.arcsin(R[0, 2])
+            Rx = np.arctan2(-R[1, 2] / np.cos(Ry), R[2, 2] / np.cos(Ry))
+            Rz = np.arctan2(-R[0, 1] / np.cos(Ry), R[0, 0] / np.cos(Ry))
+        else:
+            Rz = 0
+            Ry = np.pi / 2 * np.sign(R[0, 2])
+            Rx = np.arctan2(R[1, 0], R[1, 1])
 
-        return cls(rotation=rotation_matrix, translation=translation_vector)
+        return Pose(x, y, z, Rx, Ry, Rz)
+
+    def to_pose_axis_angle(self) -> Pose:
+        x, y, z = self.translation  # Translation components
+        R = self.rotation  # Rotation matrix
+
+        theta = np.arccos((np.trace(R) - 1) / 2)  # Rotation angle
+        # Rodrigues' formula for rotation axis
+        r = np.array([
+            R[2, 1] - R[1, 2],
+            R[0, 2] - R[2, 0],
+            R[1, 0] - R[0, 1]
+        ]) / (2 * np.sin(theta))
+
+        # Rotation vector
+        rv = r * theta
+        Rx = rv[0]
+        Ry = rv[1]
+        Rz = rv[2]
+
+        return Pose(x, y, z, Rx, Ry, Rz)
 
     @staticmethod
-    def _euler_to_rotation_matrix(Rx: float, Ry: float, Rz: float) -> np.ndarray:
+    def _euler_to_rotation_matrix(Rx: float, Ry: float, Rz: float) -> Tuple[np.ndarray, np.ndarray]:
         """
         Convert Euler angles to a rotation matrix.
 
@@ -193,9 +230,52 @@ class Transform:
                               [np.sin(Rz), np.cos(Rz), 0],
                               [0, 0, 1]])
 
-        rotation_matrix = Rz_matrix @ Ry_matrix @ Rx_matrix
+        # XYZ rotation matrix
+        xyz_matrix = Rx_matrix @ Ry_matrix @ Rz_matrix
 
-        return rotation_matrix
+        # ZXY rotation matrix
+        zxy_matrix = Rz_matrix @ Rx_matrix @ Ry_matrix
+
+        return xyz_matrix, zxy_matrix
+
+    @classmethod
+    def from_pose_zyx(cls, pose: Pose) -> 'Transform':
+        """
+        Create a Transform object from a pose represented by (x, y, z, Rx, Ry, Rz).
+
+        :param pose: Pose containing position and Euler angles (x, y, z, Rx, Ry, Rz).
+        :return: A Transform object with the corresponding rotation and translation.
+        """
+        x, y, z, Rx, Ry, Rz = pose
+
+        _, rotation_matrix = cls._euler_to_rotation_matrix(Rx, Ry, Rz)
+
+        translation_vector = np.array([x, y, z])
+
+        return cls(rotation=rotation_matrix, translation=translation_vector)
+
+    @classmethod
+    def from_pose_xyz(cls, pose: Pose) -> 'Transform':
+        """
+        Create a Transform object from a pose represented by (x, y, z, Rx, Ry, Rz).
+
+        :param pose: Pose containing position and Euler angles (x, y, z, Rx, Ry, Rz).
+        :return: A Transform object with the corresponding rotation and translation.
+        """
+        x, y, z, Rx, Ry, Rz = pose
+
+        rotation_matrix, _ = cls._euler_to_rotation_matrix(Rx, Ry, Rz)
+
+        translation_vector = np.array([x, y, z])
+
+        return cls(rotation=rotation_matrix, translation=translation_vector)
+
+    @classmethod
+    def from_rv(cls, pose: Pose, from_frame: str = 'world', to_frame: str = 'EE') -> 'Transform':
+
+        rotation_matrix = R.from_rotvec(pose.angles()).as_matrix()
+        translation = np.array(pose.translation())
+        return cls(rotation=rotation_matrix, translation=translation, from_frame=from_frame, to_frame=to_frame)
 
     @classmethod
     def from_matrix(cls, matrix, from_frame='world', to_frame='object') -> 'Transform':

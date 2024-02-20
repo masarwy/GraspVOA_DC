@@ -17,6 +17,26 @@ def calculate_weights(particles: np.ndarray, observation: any) -> None:
     particles[:, -1] = particles[:, -1].astype(np.float64) / total_weight
 
 
+def normalize_angle(angle):
+    """
+    Normalize an angle in radians to be within the range -π to π.
+
+    Parameters:
+    angle (float): The angle in radians to normalize.
+
+    Returns:
+    float: The normalized angle within the range -π to π.
+    """
+    # Normalize the angle to be within the range 0 to 2π
+    angle = angle % (2 * np.pi)
+
+    # Adjust angles greater than π to be within the range -π to 0
+    if angle > np.pi:
+        angle -= 2 * np.pi
+
+    return angle
+
+
 class BeliefSpaceModel:
     def __init__(self, standard_poses_file: str):
         with open(standard_poses_file, 'r') as file:
@@ -95,6 +115,7 @@ class BeliefSpaceModel:
 
         orientation = np.array(standard_pose['orientation'])
         orientation[2] += angle
+        orientation[2] = normalize_angle(orientation[2])
 
         position_offset = np.array(standard_pose['position_offset'])
         position = np.array([x, y, 0]) + position_offset
@@ -108,7 +129,6 @@ class BeliefSpaceModel:
         pose.Rz = orientation[2]
 
         return pose
-
 
 # Example usage:
 # model = BeliefSpaceModel(standard_poses_file='../data/objects/ENDSTOP/standard_poses.yaml')
