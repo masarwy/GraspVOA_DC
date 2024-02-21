@@ -1,5 +1,6 @@
 import numpy as np
 import yaml
+from PIL import Image
 
 from pose_belief import BeliefSpaceModel
 from transform import Transform, Point3D
@@ -21,8 +22,20 @@ if __name__ == '__main__':
 
     sensor_p_q = read_sensor_configs(sensor_poses_file)
 
+    with open(obj_poses_file, 'r') as file:
+        data = yaml.safe_load(file)
+        standard_poses = data['standard_poses']
+
     bm = BeliefSpaceModel(obj_poses_file, poi=poi)
     particles = bm.sample_particles(n_particles=10)
+
+    obj_standard_poses = []
+    obj_standard_poses_transforms = []
+    for category in standard_poses.keys():
+        obj_standard_poses.append([category, poi.x, poi.y, 0.])
+        obj_standard_poses_transforms.append(
+            Transform.from_pose_zyx(bm.particle_to_6d_pose(category, 0., poi.x, poi.y)))
+
     transforms = []
     for category, angle, x, y, _ in particles:
         transforms.append(Transform.from_pose_zyx(bm.particle_to_6d_pose(category, float(angle), float(x), float(y))))
@@ -42,8 +55,28 @@ if __name__ == '__main__':
                              to_frame='camera')
     camera_in_world_calc = CameraPoseExtractor(camera_in_ee=camera_in_ee)
 
-    masks = []
-    for t in transforms:
+    # render empty scenes
+    for sensor_id in sensor_p_q.keys():
+        sen_id = int(sensor_id[-1])
+        pose_rv = sensor_p_q[sensor_id]['pose']
+        j_state = sensor_p_q[sensor_id]['joints']
+        camera_pose = camera_in_world_calc(ee_in_world=Transform.from_rv(pose_rv)).adjust_to_look_at_format()
+        _, depth = render.render_empty_scene(camera_pose=camera_pose.get_transformation_matrix())
+        np.save(f'../data/empty_scene/gen/di_{sen_id}.npy', depth)
+
+        image_min = depth.min()
+        image_max = depth.max()
+
+        # Normalize to 0-1 range
+        normalized_image = (depth - image_min) / (image_max - image_min)
+
+        # Scale to 0-255 and convert to uint8
+        scaled_image = (normalized_image * 255).astype(np.uint8)
+        image = Image.fromarray(scaled_image)
+        image.save(f'../data/empty_scene/gen/di_{sen_id}.png')
+
+    counter = 0
+    for t in obj_standard_poses_transforms:
         obj.set_transform(t)
         if render_scene:
             scene = trimesh.Scene()
@@ -55,39 +88,23 @@ if __name__ == '__main__':
             pose_rv = sensor_p_q[sensor_id]['pose']
             j_state = sensor_p_q[sensor_id]['joints']
             camera_pose = camera_in_world_calc(ee_in_world=Transform.from_rv(pose_rv)).adjust_to_look_at_format()
-            _, _, mask = render.render_scene(mesh=obj.get_mesh(), camera_pose=camera_pose.get_transformation_matrix())
+            _, depth, mask = render.render_scene(mesh=obj.get_mesh(),
+                                                 camera_pose=camera_pose.get_transformation_matrix(), add_plane=True)
 
-            masks.append(mask)
+            sen_id = int(sensor_id[-1])
+
+            np.save('../data/objects/' + object_id + f'/img/gen/di_{sen_id}_{counter}.npy', depth)
+
+            image_min = depth.min()
+            image_max = depth.max()
+
+            # Normalize to 0-1 range
+            normalized_image = (depth - image_min) / (image_max - image_min)
+
+            # Scale to 0-255 and convert to uint8
+            scaled_image = (normalized_image * 255).astype(np.uint8)
+            image = Image.fromarray(scaled_image)
+            image.save('../data/objects/' + object_id + f'/img/gen/di_{sen_id}_{counter}.png')
+        counter += 1
 
     print('done')
-
-    # if render_scene:
-    #     scene = trimesh.Scene()
-    #     scene.add_geometry(obj.get_mesh())
-    #     # Create an axis object
-    #     axis = trimesh.creation.axis(axis_length=1.0, origin_size=0.01)
-    #
-    #     # Add the axis object to the scene
-    #     scene.add_geometry(axis)
-    #     scene.show()
-
-    # look_at_generator = camera.generate_camera_poses(n_samples_theta=4, n_samples_phi=3)
-    #
-    # counter = 0
-    # for look_at in look_at_generator:
-    #     _, depth, mask = render.render_scene(mesh=obj.get_mesh(), camera_pose=look_at.get_transformation_matrix())
-    #
-    #     print(ee_extractor(camera_in_workspace=look_at.adjust_for_camera_pose()).to_pose_zyx())
-    #     print(look_at.adjust_for_camera_pose().to_pose_zyx())
-    #     print('________________________________')
-    #     image_min = depth.min()
-    #     image_max = depth.max()
-    #
-    #     # Normalize to 0-1 range
-    #     normalized_image = (depth - image_min) / (image_max - image_min)
-    #
-    #     # Scale to 0-255 and convert to uint8
-    #     scaled_image = (normalized_image * 255).astype(np.uint8)
-    #     image = Image.fromarray(scaled_image)
-    #     image.save('../data/objects/' + object_id + f'/img/di_{counter}.png')
-    #     counter += 1

@@ -10,7 +10,7 @@ def load_and_preprocess_image(file_path: str) -> np.ndarray:
 
 
 if __name__ == '__main__':
-    file_pattern = '../data/img/di_*.png'
+    file_pattern = '../data/objects/ENDSTOP/img/di_*.png'
     image_files = sorted(glob.glob(file_pattern))
 
     if not image_files:
@@ -26,6 +26,6 @@ if __name__ == '__main__':
             if i == j:
                 similarity_matrix[i, j] = 1
             else:
-                score, _ = ssim(images[i], images[j], full=True)
-                similarity_matrix[i, j] = similarity_matrix[j, i] = score
+                score, sim_img = ssim(images[i], images[j], full=True)
+                similarity_matrix[i, j] = similarity_matrix[j, i] = float(np.exp(score-1))
     print(similarity_matrix)
