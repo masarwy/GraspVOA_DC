@@ -35,10 +35,9 @@ if __name__ == '__main__':
     aspect_ratio = camera_params['image_width'] / camera_params['image_height']
 
     obj = Object(obj_file)
-    render = Render(yfov=yfov, aspectRatio=aspect_ratio)
+    render = Render(yfov=yfov, aspectRatio=aspect_ratio, width=camera_params['image_width'],
+                    height=camera_params['image_height'])
 
-    workspace_in_world = Transform(rotation=np.eye(3), translation=np.array([-0.7, 0, 0]), from_frame='world',
-                                   to_frame='workspace')
     camera_in_ee = Transform(rotation=np.eye(3), translation=np.array([0, -0.105, 0.0395]), from_frame='EE',
                              to_frame='camera')
     camera_in_world_calc = CameraPoseExtractor(camera_in_ee=camera_in_ee)
@@ -57,6 +56,7 @@ if __name__ == '__main__':
             j_state = sensor_p_q[sensor_id]['joints']
             camera_pose = camera_in_world_calc(ee_in_world=Transform.from_rv(pose_rv)).adjust_to_look_at_format()
             _, _, mask = render.render_scene(mesh=obj.get_mesh(), camera_pose=camera_pose.get_transformation_matrix())
+
             masks.append(mask)
 
     print('done')
