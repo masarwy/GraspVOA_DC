@@ -2,7 +2,7 @@ import numpy as np
 import yaml
 from scipy.stats import vonmises, multivariate_normal
 
-from transform import Pose
+from transform import Pose, Point3D
 
 
 def calculate_weights(particles: np.ndarray, observation: any) -> None:
@@ -38,20 +38,23 @@ def normalize_angle(angle):
 
 
 class BeliefSpaceModel:
-    def __init__(self, standard_poses_file: str):
+    def __init__(self, standard_poses_file: str, poi: Point3D):
+
+        self.poi = poi
+
         with open(standard_poses_file, 'r') as file:
             data = yaml.safe_load(file)
             self.standard_poses = data['standard_poses']
 
         self.pose_categories = {category: pose['probability'] for category, pose in self.standard_poses.items()}
 
-        self.angle_kappas = {category: 1 for category in self.pose_categories.keys()}
+        self.angle_kappas = {category: 0.001 for category in self.pose_categories.keys()}
         self.angle_distributions = {category: vonmises(kappa=self.angle_kappas[category]) for category in
                                     self.pose_categories.keys()}
 
         self.position_distributions = {
             category: multivariate_normal(
-                mean=pose['position_offset'][:2],
+                mean=[poi.x, poi.y],
                 cov=[[0.02, 0], [0, 0.02]])
             for category, pose in self.standard_poses.items()
         }

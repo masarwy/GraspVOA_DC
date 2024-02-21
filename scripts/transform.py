@@ -137,6 +137,15 @@ class Transform:
         return Transform(rotation=adjusted_rotation, translation=self.translation, from_frame=self.from_frame,
                          to_frame=self.to_frame)
 
+    def adjust_to_look_at_format(self) -> 'Transform':
+
+        adjusted_rotation = self.rotation.copy()
+        adjusted_rotation[:, 2] = -adjusted_rotation[:, 2]
+        adjusted_rotation[:, 1] = -adjusted_rotation[:, 1]
+
+        return Transform(rotation=adjusted_rotation, translation=self.translation, from_frame=self.from_frame,
+                         to_frame=self.to_frame)
+
     def get_transformation_matrix(self) -> np.ndarray:
         T = np.eye(4)
         T[:3, :3] = self.rotation

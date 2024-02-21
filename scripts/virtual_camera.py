@@ -4,7 +4,7 @@ from typing import Collection
 from transform import Transform, Point3D
 
 
-class Camera:
+class VirtualCamera:
     def __init__(self, radius: float, target: Point3D = Point3D(0, 0, 0), up_vector: Point3D = Point3D(0, 0, 1)):
         self.radius = radius
         self.target = target

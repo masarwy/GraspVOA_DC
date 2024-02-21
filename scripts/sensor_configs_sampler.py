@@ -10,7 +10,6 @@ def heuristic_driven_sampling(camera_in_ee: Transform, camera_params: dict, join
     sampled_configs = []
     sampled_configs_joints = []
     scores = []
-    selected_scores = []
     heuristic = CameraVisibilityHeuristic(poi=poi, optimal_distance=70., camera_params=camera_params)
 
     for _ in range(dist_res):
