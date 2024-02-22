@@ -89,7 +89,7 @@ if __name__ == '__main__':
             j_state = sensor_p_q[sensor_id]['joints']
             camera_pose = camera_in_world_calc(ee_in_world=Transform.from_rv(pose_rv)).adjust_to_look_at_format()
             _, depth, mask = render.render_scene(mesh=obj.get_mesh(),
-                                                 camera_pose=camera_pose.get_transformation_matrix(), add_plane=True)
+                                                 camera_pose=camera_pose.get_transformation_matrix(), add_plane=False)
 
             sen_id = int(sensor_id[-1])
 
