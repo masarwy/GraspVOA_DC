@@ -1,7 +1,7 @@
 import numpy as np
 import yaml
 
-from transform import Transform, Point3D, Pose
+from utils.transform import Transform, Point3D, Pose
 from sensor_configs_sampler import heuristic_driven_sampling
 
 

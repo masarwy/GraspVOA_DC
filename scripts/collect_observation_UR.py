@@ -2,8 +2,8 @@ import urx
 from PIL import Image
 import numpy as np
 
-from sensor_conf import read_sensor_configs
-from real_camera import RealCamera
+from utils.sensor_conf import read_sensor_configs
+from entities.real_camera import RealCamera
 
 if __name__ == '__main__':
 

@@ -2,12 +2,12 @@ import numpy as np
 import yaml
 from PIL import Image
 
-from pose_belief import BeliefSpaceModel
-from transform import Transform, Point3D
-from object import Object
-from render import Render
-from common_transforms import CameraPoseExtractor
-from sensor_conf import read_sensor_configs
+from entities.pose_belief import BeliefSpaceModel
+from utils.transform import Transform, Point3D
+from entities.object import Object
+from entities.render import Render
+from utils.common_transforms import CameraPoseExtractor
+from utils.sensor_conf import read_sensor_configs
 
 import trimesh
 

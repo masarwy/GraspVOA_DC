@@ -1,7 +1,7 @@
 import trimesh
 import numpy as np
 
-from transform import Transform
+from utils.transform import Transform
 
 
 class Object:

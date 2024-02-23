@@ -1,8 +1,8 @@
 import numpy as np
 
-from heuristic import CameraVisibilityHeuristic
-from transform import Transform, Point3D
-from ur5e_fk import forward
+from utils.heuristic import CameraVisibilityHeuristic
+from utils.transform import Transform, Point3D
+from utils.ur5e_fk import forward
 
 
 def heuristic_driven_sampling(camera_in_ee: Transform, camera_params: dict, joint_limits: np.ndarray, poi: Point3D,

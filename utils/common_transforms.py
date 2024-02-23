@@ -1,4 +1,4 @@
-from transform import Transform
+from utils.transform import Transform
 
 
 class EEPoseExtractor:

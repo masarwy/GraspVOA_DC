@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Collection
 
-from transform import Transform, Point3D
+from utils.transform import Transform, Point3D
 
 
 class VirtualCamera:
