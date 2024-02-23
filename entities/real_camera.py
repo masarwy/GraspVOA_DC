@@ -1,6 +1,24 @@
 import pyrealsense2 as rs
 import yaml
 import numpy as np
+import cv2
+
+
+def preprocess_depth_image(depth_img: np.ndarray, filter_size: int = 5, threshold: float = 1.5):
+    # Apply a Gaussian filter to reduce noise
+    smooth_img = cv2.GaussianBlur(depth_img, (filter_size, filter_size), 0)
+
+    # Compute the median of the depth
+    median_val = np.median(smooth_img)
+
+    # Set a threshold for outliers based on the median value
+    lower_bound = median_val / threshold
+    upper_bound = median_val * threshold
+
+    # Remove outliers
+    depth_img_clipped = np.clip(smooth_img, lower_bound, upper_bound)
+
+    return depth_img_clipped
 
 
 class RealCamera:
