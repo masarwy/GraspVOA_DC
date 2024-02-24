@@ -2,7 +2,7 @@ import numpy as np
 import yaml
 
 from utils.transform import Transform, Point3D, Pose
-from sensor_configs_sampler import heuristic_driven_sampling
+from scripts.sensor_configs_sampler import heuristic_driven_sampling
 
 
 def dict_to_pose(data):
