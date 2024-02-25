@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import cv2
 from typing import Optional
 
@@ -53,9 +54,9 @@ class StructureTermStrategy(SimilarityStrategy):
 
         image_b = normalize_depth_ignore_zeros(image_b)
 
-        exponent = 10
-
-        return 100 * self.structural_term(image_a, image_b) ** exponent
+        exponent = 1
+        return 10 * self.structural_term(image_a, image_b) ** exponent
+        # return 100 * self.structural_term(image_a, image_b) ** exponent
 
     @staticmethod
     def structural_term(x: np.ndarray, y: np.ndarray, c3: float = 0.03 ** 2) -> float:
@@ -70,14 +71,10 @@ class StructureTermStrategy(SimilarityStrategy):
         Returns:
         float: The structural term of the SSIM.
         """
-        # Compute the covariance between x and y
-        cov_xy = np.cov(x.flatten(), y.flatten())[0, 1]
 
-        # Compute the standard deviation of x and y
+        cov_xy = np.cov(x.flatten(), y.flatten())[0, 1]
         sigma_x = np.std(x)
         sigma_y = np.std(y)
-
-        # Compute the structural term
         structural_similarity = (cov_xy + c3) / (sigma_x * sigma_y + c3)
 
         return structural_similarity
@@ -95,7 +92,8 @@ class ContourMatchStrategy(SimilarityStrategy):
 
         target_image = np.load(image_file_b)
         target_image = np.where(target_image != 0, 255, 0).astype(np.uint8)
-        return 1 / self.find_min_similarity(target_image, ref_contour)
+        res = self.find_min_similarity(target_image, ref_contour)
+        return math.exp(-15 * res)
 
     @staticmethod
     def find_min_similarity(target_image, ref_contour) -> float:
@@ -126,15 +124,29 @@ class IoUStrategy(SimilarityStrategy):
 
     @staticmethod
     def compute_iou(mask_a, mask_b):
-        # Calculate the intersection: pixels that are positive in both masks
         intersection = np.logical_and(mask_a, mask_b).sum()
-
-        # Calculate the union: pixels that are positive in either mask
         union = np.logical_or(mask_a, mask_b).sum()
-
-        # Compute IoU
         iou = intersection / union if union != 0 else 0
+
         return iou
+
+
+class HuMomentsStrategy(SimilarityStrategy):
+    def __init__(self):
+        super().__init__('Hu Moments Similarity')
+
+    def __call__(self, image_file_a: str, image_file_b: str, a_is_real: bool = False) -> float:
+        mask_a = np.load(image_file_a)
+        mask_a = np.where(mask_a != 0, 255, 0).astype(np.uint8)
+        mask_b = np.load(image_file_b)
+        mask_b = np.where(mask_b != 0, 255, 0).astype(np.uint8)
+
+        moments_a = cv2.HuMoments(cv2.moments(mask_a)).flatten()
+        moments_b = cv2.HuMoments(cv2.moments(mask_b)).flatten()
+
+        hu_score = np.sum(np.abs(moments_a - moments_b))
+
+        return hu_score
 
 
 class SimilarityContext:

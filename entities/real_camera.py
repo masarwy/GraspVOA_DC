@@ -39,14 +39,23 @@ class RealCamera:
         self.pipeline.start(self.config)
 
     def get_images(self):
-        align_to = rs.stream.color
+        # Align the color frame to the depth frame
+        align_to = rs.stream.depth
         align = rs.align(align_to)
 
+        # Wait for a coherent pair of frames: depth and color
         frames = self.pipeline.wait_for_frames()
         aligned_frames = align.process(frames)
+
+        # Get aligned frames
         depth_frame = aligned_frames.get_depth_frame()
         color_frame = aligned_frames.get_color_frame()
 
+        # Validate that both frames are valid
+        if not depth_frame or not color_frame:
+            raise ValueError("Could not obtain aligned frames from the RealSense device")
+
+        # Convert images to numpy arrays
         depth_image = np.asanyarray(depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
 

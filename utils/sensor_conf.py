@@ -36,7 +36,7 @@ if __name__ == '__main__':
     yfov = np.radians(camera_params['fov_vertical_rad'])
     aspect_ratio = camera_params['image_width'] / camera_params['image_height']
 
-    camera_in_ee = Transform(rotation=np.eye(3), translation=np.array([0, -0.105, 0.0395]), from_frame='EE',
+    camera_in_ee = Transform(rotation=np.eye(3), translation=np.array([-0.0075, -0.105, 0.0395]), from_frame='EE',
                              to_frame='camera')
     joint_limits = np.zeros((6, 2))
     joint_limits[:, 1] = np.array([2 * np.pi] * 6)

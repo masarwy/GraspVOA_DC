@@ -51,7 +51,7 @@ if __name__ == '__main__':
     render = Render(yfov=yfov, aspectRatio=aspect_ratio, width=camera_params['image_width'],
                     height=camera_params['image_height'])
 
-    camera_in_ee = Transform(rotation=np.eye(3), translation=np.array([0, -0.105, 0.0395]), from_frame='EE',
+    camera_in_ee = Transform(rotation=np.eye(3), translation=np.array([-0.0075, -0.105, 0.0395]), from_frame='EE',
                              to_frame='camera')
     camera_in_world_calc = CameraPoseExtractor(camera_in_ee=camera_in_ee)
 

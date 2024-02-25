@@ -22,7 +22,7 @@ if __name__ == '__main__':
     gen_images_files = {}
     for pose_id in range(5):
         image_id = f'{sensor_id}_{pose_id}'
-        gen_images_files[image_id] = f'../data/objects/ENDSTOP/img/gen/di_' + image_id + '.npy'
+        gen_images_files[image_id] = '../data/objects/ENDSTOP/img/gen/di_' + image_id + '.npy'
 
     for strategy in strategies:
         similarity_scores = {}
