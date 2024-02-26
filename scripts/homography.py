@@ -16,8 +16,8 @@ def normalise_depth(npy_file):
 
 
 # Load the images
-image1 = normalise_depth('../data/objects/ENDSTOP/img/lab/mdi_0_1.npy')
-image2 = normalise_depth('../data/objects/ENDSTOP/img/gen/di_0_3.npy')
+image1 = io.imread('../data/objects/ENDSTOP/img/lab/mask_0_0.png', as_gray=True)
+image2 = io.imread('../data/objects/ENDSTOP/img/gen/di_0_2.png', as_gray=True)
 
 # Apply threshold to create binary masks
 thresh1 = threshold_otsu(image1)

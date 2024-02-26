@@ -38,8 +38,7 @@ def normalize_angle(angle):
 
 
 class BeliefSpaceModel:
-    def __init__(self, standard_poses_file: str, poi: Point3D):
-
+    def __init__(self, standard_poses_file: str, poi: 'Point3D'):
         self.poi = poi
 
         with open(standard_poses_file, 'r') as file:
@@ -48,15 +47,43 @@ class BeliefSpaceModel:
 
         self.pose_categories = {category: pose['probability'] for category, pose in self.standard_poses.items()}
 
+        # Initialize model parameters and their priors
         self.angle_kappas = {category: 0.001 for category in self.pose_categories.keys()}
+        self.angle_kappas_prior = self.angle_kappas.copy()
+
+        self.position_means = {category: np.array([poi.x, poi.y]) for category in self.pose_categories.keys()}
+        self.position_means_prior = self.position_means.copy()
+
+        self.position_covariances = {
+            category: np.array([[0.02, 0], [0, 0.02]]) for category in self.pose_categories.keys()
+        }
+        self.position_covariances_prior = self.position_covariances.copy()
+
+        self.angle_distributions = {category: vonmises(kappa=self.angle_kappas[category]) for category in
+                                    self.pose_categories.keys()}
+        self.position_distributions = {
+            category: multivariate_normal(mean=self.position_means[category], cov=self.position_covariances[category])
+            for category in self.pose_categories.keys()
+        }
+
+    def reset(self):
+        self.pose_categories = {category: pose['probability'] for category, pose in self.standard_poses.items()}
+
+        self.angle_kappas = {category: 0.001 for category in self.pose_categories.keys()}
+        self.angle_kappas_prior = self.angle_kappas.copy()  # Reset the priors as well
         self.angle_distributions = {category: vonmises(kappa=self.angle_kappas[category]) for category in
                                     self.pose_categories.keys()}
 
+        self.position_means = {category: np.array([self.poi.x, self.poi.y]) for category in self.pose_categories.keys()}
+        self.position_means_prior = self.position_means.copy()  # Reset the priors as well
+
+        initial_covariance = np.array([[0.02, 0], [0, 0.02]])
+        self.position_covariances = {category: initial_covariance for category in self.pose_categories.keys()}
+        self.position_covariances_prior = self.position_covariances.copy()  # Reset the priors as well
+
         self.position_distributions = {
-            category: multivariate_normal(
-                mean=[poi.x, poi.y],
-                cov=[[0.02, 0], [0, 0.02]])
-            for category, pose in self.standard_poses.items()
+            category: multivariate_normal(mean=self.position_means[category], cov=self.position_covariances[category])
+            for category in self.pose_categories.keys()
         }
 
     def display_parameters(self, title: str = "Model Parameters") -> None:
@@ -78,40 +105,59 @@ class BeliefSpaceModel:
                 particles.append((category, angle_sample, *position_sample, 0.))
         return np.array(particles)
 
-    def update_model(self, particles: np.ndarray) -> None:
-        """
-        Updates the belief space
-        :param particles: (category, angle, x, y, weight)
-        :return:
-        """
-        self.display_parameters("Parameters Before Update")
+    def update_model(self, particles: np.ndarray, prior_strength: float = 0.5) -> None:
+        # self.display_parameters("Parameters Before Update")
+
+        epsilon = 1e-4
+        total_weight = np.sum(particles[:, 4].astype(np.float64))  # Sum of all particle weights
+        updated_category_weights = {category: 0.0 for category in self.pose_categories.keys()}
 
         for category in self.pose_categories.keys():
             category_particles = particles[particles[:, 0] == category]
-
             if len(category_particles) > 0:
                 angles = category_particles[:, 1].astype(np.float64)
                 weights = category_particles[:, 4].astype(np.float64)
 
-                weighted_angle_mean = np.average(angles, weights=weights)
+                updated_category_weights[category] = np.sum(weights)
 
+                # Update angle parameters considering prior
+                weighted_angle_mean = np.average(angles, weights=weights)
                 angle_diffs_squared = (angles - weighted_angle_mean) ** 2
                 weighted_variance = np.sum(weights * angle_diffs_squared) / np.sum(weights)
+                new_kappa = 1 / (weighted_variance + epsilon)
+                self.angle_kappas[category] = (prior_strength * self.angle_kappas_prior[category]) + (
+                        (1 - prior_strength) * new_kappa)
 
-                self.angle_distributions[category] = vonmises(kappa=1 / weighted_variance)
-                self.angle_kappas[category] = 1 / weighted_variance
-
+                # Update position parameters considering prior
                 positions = category_particles[:, 2:4].astype(np.float64)
-
                 weighted_positions = np.average(positions, axis=0, weights=weights)
-
                 position_diffs = positions - weighted_positions
                 weighted_covariance = np.dot((position_diffs.T * weights), position_diffs) / np.sum(weights)
+                regularized_covariance = weighted_covariance + np.eye(weighted_covariance.shape[0]) * epsilon
+                self.position_means[category] = (prior_strength * self.position_means_prior[category]) + (
+                        (1 - prior_strength) * weighted_positions)
+                self.position_covariances[category] = (prior_strength * self.position_covariances_prior[category]) + (
+                        (1 - prior_strength) * regularized_covariance)
 
-                self.position_distributions[category] = multivariate_normal(mean=weighted_positions,
-                                                                            cov=weighted_covariance)
+                # Update distributions
+                self.angle_distributions[category] = vonmises(kappa=self.angle_kappas[category])
+                self.position_distributions[category] = multivariate_normal(mean=self.position_means[category],
+                                                                            cov=self.position_covariances[category])
 
-        self.display_parameters("Parameters After Update")
+        # Update category probabilities
+        if total_weight > 0:
+            for category in self.pose_categories.keys():
+                self.pose_categories[category] = updated_category_weights[category] / total_weight
+        else:
+            for category in self.pose_categories.keys():
+                self.pose_categories[category] = 1.0 / len(self.pose_categories)
+
+        # Optionally, update the priors at the end of the update process
+        self.angle_kappas_prior = self.angle_kappas.copy()
+        self.position_means_prior = self.position_means.copy()
+        self.position_covariances_prior = self.position_covariances.copy()
+
+        # self.display_parameters("Parameters After Update")
 
     def particle_to_6d_pose(self, category: str, angle: float, x: float, y: float) -> Pose:
         standard_pose = self.standard_poses[category]
@@ -132,6 +178,37 @@ class BeliefSpaceModel:
         pose.Rz = orientation[2]
 
         return pose
+
+    # def calculate_likelihood(self, category: str, angle: float, x: float, y: float) -> float:
+    #     if category not in self.pose_categories:
+    #         raise ValueError(f"Unknown category: {category}")
+    #
+    #     category_prob = self.pose_categories[category]
+    #
+    #     angle_likelihood = self.angle_distributions[category].pdf(angle)
+    #
+    #     position_likelihood = self.position_distributions[category].pdf([x, y])
+    #
+    #     total_likelihood = category_prob * angle_likelihood * position_likelihood
+    #
+    #     return total_likelihood
+
+    def calculate_log_likelihood(self, category: str, angle: float, x: float, y: float) -> float:
+        if category not in self.pose_categories:
+            raise ValueError(f"Unknown category: {category}")
+
+        log_category_prob = np.log(self.pose_categories[category])
+
+        raw_log_angle_likelihood = self.angle_distributions[category].logpdf(angle)
+        min_log_likelihood = -3
+        max_log_likelihood = 0
+        log_angle_likelihood = np.clip(raw_log_angle_likelihood, min_log_likelihood, max_log_likelihood)
+
+        log_position_likelihood = self.position_distributions[category].logpdf([x, y])
+
+        total_log_likelihood = log_category_prob + log_angle_likelihood + log_position_likelihood
+
+        return total_log_likelihood
 
 # Example usage:
 # model = BeliefSpaceModel(standard_poses_file='../data/objects/ENDSTOP/standard_poses.yaml')
