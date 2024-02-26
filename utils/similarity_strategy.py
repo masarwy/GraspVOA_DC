@@ -93,7 +93,7 @@ class ContourMatchStrategy(SimilarityStrategy):
         target_image = np.load(image_file_b)
         target_image = np.where(target_image != 0, 255, 0).astype(np.uint8)
         res = self.find_min_similarity(target_image, ref_contour)
-        return math.exp(-15 * res)
+        return math.exp(-10 * res)
 
     @staticmethod
     def find_min_similarity(target_image, ref_contour) -> float:

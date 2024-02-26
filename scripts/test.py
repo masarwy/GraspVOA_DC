@@ -31,3 +31,5 @@ if __name__ == '__main__':
             similarity_scores[image_id] = sim_context.compare_images(real_image_file, gen_images_files[image_id],
                                                                      a_is_real=True)
         print(sim_context.get_strategy_name(), ': ', dict_softmax(similarity_scores))
+
+
