@@ -3,7 +3,7 @@ import yaml
 from PIL import Image
 
 from entities.pose_belief import BeliefSpaceModel
-from utils.transform import Transform, Point3D
+from utils.transform import Transform, Point3D, Pose
 from entities.object import Object
 from entities.render import Render
 from utils.common_transforms import CameraPoseExtractor
@@ -16,29 +16,28 @@ if __name__ == '__main__':
 
     object_id = 'ENDSTOP'
     obj_file = '../data/objects/' + object_id + '/object.obj'
-    obj_poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
+    obj_std_poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
+    obj_sampled_poses_file = '../data/objects/' + object_id + '/sampled_poses.yaml'
     sensor_poses_file = '../data/poses_and_joints.yaml'
     poi = Point3D(-1.2, -1., 0)
 
     sensor_p_q = read_sensor_configs(sensor_poses_file)
 
-    with open(obj_poses_file, 'r') as file:
+    with open(obj_std_poses_file, 'r') as file:
         data = yaml.safe_load(file)
         standard_poses = data['standard_poses']
 
-    bm = BeliefSpaceModel(obj_poses_file, poi=poi)
-    particles = bm.sample_particles(n_particles=10)
+    bm = BeliefSpaceModel(obj_std_poses_file, poi=poi)
 
-    obj_standard_poses = []
-    obj_standard_poses_transforms = []
-    for category in standard_poses.keys():
-        obj_standard_poses.append([category, poi.x, poi.y, 0.])
-        obj_standard_poses_transforms.append(
-            Transform.from_pose_zyx(bm.particle_to_6d_pose(category, 0., poi.x, poi.y)))
+    with open(obj_sampled_poses_file, 'r') as file:
+        data = yaml.safe_load(file)
+        sampled_poses = data['poses']
 
     transforms = []
-    for category, angle, x, y, _ in particles:
-        transforms.append(Transform.from_pose_zyx(bm.particle_to_6d_pose(category, float(angle), float(x), float(y))))
+    for pose in sampled_poses.keys():
+        x, y, z = sampled_poses[pose]['position_offset']
+        rx, ry, rz = sampled_poses[pose]['orientation']
+        transforms.append(Transform.from_pose_xyz(Pose(x, y, z, rx, ry, rz)))
 
     camera_params_file = '../data/camera_params.yaml'
     with open(camera_params_file, 'r') as file:
@@ -76,7 +75,7 @@ if __name__ == '__main__':
         image.save(f'../data/empty_scene/gen/di_{sen_id}.png')
 
     counter = 0
-    for t in obj_standard_poses_transforms:
+    for t in transforms:
         obj.set_transform(t)
         if render_scene:
             scene = trimesh.Scene()

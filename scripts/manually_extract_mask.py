@@ -8,13 +8,13 @@ import cv2
 
 if __name__ == '__main__':
     sen_id = 5
-    obj_pose_id = 4
+    obj_pose_id = 5
 
     # Load the image
     image_lab = rgb2lab(io.imread(f'../data/objects/ENDSTOP/img/lab/c_{sen_id}_{obj_pose_id}.png'))
 
     # Apply SLIC segmentation
-    segments = slic(image_lab, n_segments=3000, compactness=10, enforce_connectivity=True)
+    segments = slic(image_lab, n_segments=1500, compactness=10, enforce_connectivity=True)
 
     # Calculate properties for each superpixel
     props = regionprops(segments, intensity_image=image_lab)
