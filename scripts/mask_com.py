@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-sensor_id = 5
-pose_id = 4
+sensor_id = 0
+pose_id = 1
 
 mask1 = plt.imread(f'../data/objects/ENDSTOP/img/lab/mask_{sensor_id}_{pose_id}.png')
 mask2 = np.load(f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{pose_id}.npy')

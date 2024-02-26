@@ -7,8 +7,8 @@ from skimage.color import rgb2lab
 import cv2
 
 if __name__ == '__main__':
-    sen_id = 5
-    obj_pose_id = 5
+    sen_id = 0
+    obj_pose_id = 1
 
     # Load the image
     image_lab = rgb2lab(io.imread(f'../data/objects/ENDSTOP/img/lab/c_{sen_id}_{obj_pose_id}.png'))
