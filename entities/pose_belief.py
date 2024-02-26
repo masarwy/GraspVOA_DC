@@ -55,7 +55,7 @@ class BeliefSpaceModel:
         self.position_means_prior = self.position_means.copy()
 
         self.position_covariances = {
-            category: np.array([[0.02, 0], [0, 0.02]]) for category in self.pose_categories.keys()
+            category: np.array([[0.15, 0], [0, 0.15]]) for category in self.pose_categories.keys()
         }
         self.position_covariances_prior = self.position_covariances.copy()
 
@@ -77,7 +77,7 @@ class BeliefSpaceModel:
         self.position_means = {category: np.array([self.poi.x, self.poi.y]) for category in self.pose_categories.keys()}
         self.position_means_prior = self.position_means.copy()  # Reset the priors as well
 
-        initial_covariance = np.array([[0.02, 0], [0, 0.02]])
+        initial_covariance = np.array([[0.15, 0], [0, 0.15]])
         self.position_covariances = {category: initial_covariance for category in self.pose_categories.keys()}
         self.position_covariances_prior = self.position_covariances.copy()  # Reset the priors as well
 
@@ -105,7 +105,7 @@ class BeliefSpaceModel:
                 particles.append((category, angle_sample, *position_sample, 0.))
         return np.array(particles)
 
-    def update_model(self, particles: np.ndarray, prior_strength: float = 0.5) -> None:
+    def update_model(self, particles: np.ndarray, prior_strength: float = 0.25) -> None:
         # self.display_parameters("Parameters Before Update")
 
         epsilon = 1e-4
@@ -179,19 +179,19 @@ class BeliefSpaceModel:
 
         return pose
 
-    # def calculate_likelihood(self, category: str, angle: float, x: float, y: float) -> float:
-    #     if category not in self.pose_categories:
-    #         raise ValueError(f"Unknown category: {category}")
-    #
-    #     category_prob = self.pose_categories[category]
-    #
-    #     angle_likelihood = self.angle_distributions[category].pdf(angle)
-    #
-    #     position_likelihood = self.position_distributions[category].pdf([x, y])
-    #
-    #     total_likelihood = category_prob * angle_likelihood * position_likelihood
-    #
-    #     return total_likelihood
+    def calculate_likelihood(self, category: str, angle: float, x: float, y: float) -> float:
+        if category not in self.pose_categories:
+            raise ValueError(f"Unknown category: {category}")
+
+        category_prob = self.pose_categories[category]
+
+        angle_likelihood = self.angle_distributions[category].pdf(angle)
+
+        position_likelihood = self.position_distributions[category].pdf([x, y])
+
+        total_likelihood = category_prob * angle_likelihood * position_likelihood
+
+        return total_likelihood
 
     def calculate_log_likelihood(self, category: str, angle: float, x: float, y: float) -> float:
         if category not in self.pose_categories:

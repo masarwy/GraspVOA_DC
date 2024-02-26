@@ -38,7 +38,6 @@ if __name__ == '__main__':
         sim_matrix = np.zeros((5, 5))
         for pose_id in range(5):
             real_image_file = f'../data/objects/ENDSTOP/img/lab/mdi_{sensor_id}_{pose_id}.npy'
-            res = {}
             for pose_id_ in range(5):
                 gen_image_file = f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{pose_id_}.npy'
                 sim_matrix[pose_id, pose_id_] = (

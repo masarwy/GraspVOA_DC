@@ -24,7 +24,7 @@ def compute_best_grasp(grasp_score: dict, likelihood: dict) -> str:
 def compute_likelihood(belief: BeliefSpaceModel, poses: dict, parts: np.ndarray) -> dict:
     likelihood = {}
     for i, pose in enumerate(poses.keys()):
-        rep_pose = sampled_poses[pose]['our_rep']
+        rep_pose = poses[pose]['our_rep']
         parts[i, 0] = category = rep_pose['category']
         parts[i, 1] = angle = rep_pose['angle']
         parts[i, 2] = x = rep_pose['x']
@@ -35,8 +35,9 @@ def compute_likelihood(belief: BeliefSpaceModel, poses: dict, parts: np.ndarray)
 
 if __name__ == '__main__':
     sims = [StructureTermStrategy(), IoUStrategy(), ContourMatchStrategy()]
+    sim_context = SimilarityContext()
     for sim in sims:
-        sim_context = SimilarityContext(sim)
+        sim_context.set_strategy(sim)
         print(sim_context.get_strategy_name())
         for sensor_id in range(6):
             file_pattern = f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_*.npy'
