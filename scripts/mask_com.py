@@ -2,12 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 sensor_id = 0
-pose_id = 1
+pose_id = 0
+pose_id_ = 0
 
-mask1 = plt.imread(f'../data/objects/ENDSTOP/img/lab/mask_{sensor_id}_{pose_id}.png')
+mask1 = np.load(f'../data/objects/ENDSTOP/img/lab/mdi_{sensor_id}_{pose_id}.npy')
 mask2 = np.load(f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{pose_id}.npy')
 mask1 = mask1 != 0.
-mask2 = mask2 != 0
+mask2 = mask2 != 0.
 
 combined_image = np.zeros((*mask1.shape, 3), dtype=np.uint8)
 
@@ -21,3 +22,15 @@ combined_image[overlap] = [255, 0, 255]  # Purple
 plt.imshow(combined_image)
 plt.axis('off')  # Turn off axis numbers and ticks
 plt.show()
+
+c3 = 0.03 ** 2
+cov_xy = np.cov(mask1.flatten(), mask2.flatten())[0, 1]
+sigma_x = np.std(mask1)
+sigma_y = np.std(mask2)
+structural_similarity = (cov_xy + c3) / (sigma_x * sigma_y + c3)
+# print(structural_similarity)
+
+intersection = np.logical_and(mask1, mask2).sum()
+union = np.logical_or(mask1, mask2).sum()
+iou = intersection / union if union != 0 else 0
+print(iou)

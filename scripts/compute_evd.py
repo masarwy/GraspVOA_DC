@@ -47,16 +47,19 @@ if __name__ == '__main__':
             for i, sampled_pose in enumerate(sampled_poses):
                 b[i] = soft_m[sampled_pose]
 
-            init_x_star, score = gamma_bar(grasp_score=grasp_score, belief=b)
+            init_x_star, score, _ = gamma_bar(grasp_score=grasp_score, belief=b)
             evd = -score
+            print(init_x_star, score)
             for i, pose in enumerate(sampled_poses):
                 new_b = np.zeros_like(b)
                 real_image_file = f'../data/objects/ENDSTOP/img/lab/mdi_{sensor_id}_{i}.npy'
                 for j, pose_ in enumerate(sampled_poses):
                     gen_image_file = f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{j}.npy'
                     new_b[j] = b[j] * sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True)
+                    print(sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True))
                 new_b /= new_b.sum()
-                x_star, score = gamma_bar(grasp_score=grasp_score, belief=new_b)
+                x_star, score, true_x = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
+                print(x_star, score, true_x)
                 evd += score * b[i]
             print(sensor_id, ' EVD: ', evd)
 
