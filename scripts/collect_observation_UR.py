@@ -11,7 +11,7 @@ if __name__ == '__main__':
     sensor_poses_file = '../data/poses_and_joints.yaml'
     sensor_p_q = read_sensor_configs(sensor_poses_file)
 
-    object_id = 'ENDSTOP'
+    object_id = 'FLASK'
 
     rob = urx.Robot(robot_ip, use_rt=True)
     real_camera = RealCamera('../data/camera_params.yaml')

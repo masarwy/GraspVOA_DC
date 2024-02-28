@@ -57,6 +57,7 @@ if __name__ == '__main__':
     sims = [StructureTermStrategy(), IoUStrategy(), ContourMatchStrategy()]
     sim_context = SimilarityContext()
     for sim in sims:
+        print('____________________________________________________________________')
         sim_context.set_strategy(sim)
         print(sim_context.get_strategy_name())
         for sensor_id in range(6):
@@ -109,6 +110,7 @@ if __name__ == '__main__':
                 b[i] = soft_m[sampled_pose]
             init_x_star, score, _ = gamma_bar(grasp_score=grasp_score, belief=b)
             print(init_x_star, score)
+            print('_______________________________')
             voa = -score
             for i, pose_h in enumerate(sampled_poses.keys()):
                 new_b = np.zeros_like(b)
@@ -116,7 +118,8 @@ if __name__ == '__main__':
                     new_b[j] = b[j] * softmax_matrix[i, j]
                 new_b /= new_b.sum()
                 x_star, score, actual = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
-                print(x_star, score, actual)
+                if i == 0:
+                    print(x_star, score, actual)
                 voa += score * b[i]
             print(sensor_id, ' VOA: ', voa)
 

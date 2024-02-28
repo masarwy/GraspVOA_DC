@@ -27,6 +27,7 @@ if __name__ == '__main__':
         sampled_poses = data['poses']
 
     for sim in sims:
+        print('_______________________________________________________________')
         sim_context.set_strategy(sim)
         print(sim_context.get_strategy_name())
         for sensor_id in range(6):
@@ -50,16 +51,20 @@ if __name__ == '__main__':
             init_x_star, score, _ = gamma_bar(grasp_score=grasp_score, belief=b)
             evd = -score
             print(init_x_star, score)
+            print('_______________________________')
             for i, pose in enumerate(sampled_poses):
-                new_b = np.zeros_like(b)
+                sim_arr = np.zeros_like(b)
                 real_image_file = f'../data/objects/ENDSTOP/img/lab/mdi_{sensor_id}_{i}.npy'
                 for j, pose_ in enumerate(sampled_poses):
                     gen_image_file = f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{j}.npy'
-                    new_b[j] = b[j] * sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True)
-                    print(sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True))
+                    sim_arr[j] = sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True)
+                exp_x = np.exp(sim_arr - np.max(sim_arr))
+                soft_arr = exp_x / exp_x.sum()
+                new_b = b * soft_arr
                 new_b /= new_b.sum()
                 x_star, score, true_x = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
-                print(x_star, score, true_x)
+                if i == 0:
+                    print(x_star, score, true_x)
                 evd += score * b[i]
             print(sensor_id, ' EVD: ', evd)
 
