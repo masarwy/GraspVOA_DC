@@ -1,5 +1,8 @@
 import glob
+
+import numpy as np
 import yaml
+from typing import Tuple
 
 from utils.similarity_strategy import *
 from entities.pose_belief import BeliefSpaceModel
@@ -7,7 +10,24 @@ from utils.transform import Point3D
 from scripts.test import dict_softmax
 
 
-def compute_best_grasp(grasp_score: dict, likelihood: dict) -> str:
+def gamma_bar(grasp_score: dict, belief: np.ndarray, true_pose: int = None) -> Tuple[str, float, str]:
+    dim1 = len(grasp_score)
+    unique_keys = set(key for inner_dict in grasp_score.values() for key in inner_dict.keys())
+    dim2 = len(unique_keys)
+    table = np.zeros((dim2, dim1))
+    for p in range(dim2):
+        for g in range(dim1):
+            table[p, g] = grasp_score[f'G{g + 1}'][f'P{p + 1}'] * belief[p]
+    column_sums = np.sum(table, axis=0)
+    best_grasp = column_sums.argmax()
+    true_best = None
+    if true_pose is not None:
+        idx = table[true_pose, :].argmax()
+        true_best = f'G{idx + 1}'
+    return f'G{best_grasp + 1}', column_sums[best_grasp], true_best
+
+
+def compute_best_grasp(grasp_score: dict, likelihood: dict) -> Tuple[str, float]:
     dim1 = len(grasp_score)
     unique_keys = set(key for inner_dict in grasp_score.values() for key in inner_dict.keys())
     dim2 = len(unique_keys)
@@ -18,13 +38,13 @@ def compute_best_grasp(grasp_score: dict, likelihood: dict) -> str:
             table[p, g] = grasp_score[f'G{g + 1}'][f'P{p + 1}'] * softmax[f'P{p + 1}']
     column_sums = np.sum(table, axis=0)
     best_grasp = column_sums.argmax()
-    return f'G{best_grasp + 1}'
+    return f'G{best_grasp + 1}', column_sums[best_grasp]
 
 
 def compute_likelihood(belief: BeliefSpaceModel, poses: dict, parts: np.ndarray) -> dict:
     likelihood = {}
     for i, pose in enumerate(poses.keys()):
-        rep_pose = sampled_poses[pose]['our_rep']
+        rep_pose = poses[pose]['our_rep']
         parts[i, 0] = category = rep_pose['category']
         parts[i, 1] = angle = rep_pose['angle']
         parts[i, 2] = x = rep_pose['x']
@@ -35,8 +55,9 @@ def compute_likelihood(belief: BeliefSpaceModel, poses: dict, parts: np.ndarray)
 
 if __name__ == '__main__':
     sims = [StructureTermStrategy(), IoUStrategy(), ContourMatchStrategy()]
+    sim_context = SimilarityContext()
     for sim in sims:
-        sim_context = SimilarityContext(sim)
+        sim_context.set_strategy(sim)
         print(sim_context.get_strategy_name())
         for sensor_id in range(6):
             file_pattern = f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_*.npy'
@@ -78,21 +99,43 @@ if __name__ == '__main__':
                 data = yaml.safe_load(file)
                 sampled_poses = data['poses']
 
-            particles = np.empty((len(sampled_poses), 5), dtype=object)
+            n_poses = len(sampled_poses)
+            particles = np.empty((n_poses, 5), dtype=object)
             likelihood = compute_likelihood(belief=bm, poses=sampled_poses, parts=particles)
-            voa = 0
+            soft_m = dict_softmax(likelihood)
+
+            b = np.array([1 / n_poses] * n_poses)
+            for i, sampled_pose in enumerate(sampled_poses):
+                b[i] = soft_m[sampled_pose]
+            init_x_star, score, _ = gamma_bar(grasp_score=grasp_score, belief=b)
+            print(init_x_star, score)
+            voa = -score
             for i, pose_h in enumerate(sampled_poses.keys()):
-                # print(pose_h)
+                new_b = np.zeros_like(b)
                 for j, pose_a in enumerate(sampled_poses.keys()):
-                    particles[j, 4] = softmax_matrix[i, j] * np.exp(likelihood[pose_a])
-                    # print(particles[j, 4])
-                bm.update_model(particles=particles)
-                likelihood = compute_likelihood(belief=bm, poses=sampled_poses, parts=particles)
-                softm = dict_softmax(likelihood)
-                # print(softm)
-                best_grasp = compute_best_grasp(grasp_score=grasp_score, likelihood=softm)
-                voa += grasp_score[best_grasp][pose_h] * softm[pose_h]
-                bm.reset()
-                likelihood = compute_likelihood(belief=bm, poses=sampled_poses, parts=particles)
+                    new_b[j] = b[j] * softmax_matrix[i, j]
+                new_b /= new_b.sum()
+                x_star, score, actual = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
+                print(x_star, score, actual)
+                voa += score * b[i]
             print(sensor_id, ' VOA: ', voa)
-        print('__________________')
+
+        #     particles = np.empty((len(sampled_poses), 5), dtype=object)
+        #     likelihood = compute_likelihood(belief=bm, poses=sampled_poses, parts=particles)
+        #     soft_m = dict_softmax(likelihood)
+        #
+        #     best_grasp, score = compute_best_grasp(grasp_score=grasp_score, likelihood=soft_m)
+        #     voa = -score
+        #     for i, pose_h in enumerate(sampled_poses.keys()):
+        #         # print(pose_h)
+        #         for j, pose_a in enumerate(sampled_poses.keys()):
+        #             particles[j, 4] = softmax_matrix[i, j]  # * np.exp(likelihood[pose_a])
+        #             # print(particles[j, 4])
+        #         bm.update_model(particles=particles)
+        #         u_likelihood = compute_likelihood(belief=bm, poses=sampled_poses, parts=particles)
+        #         u_soft_m = dict_softmax(u_likelihood)
+        #         best_grasp, score = compute_best_grasp(grasp_score=grasp_score, likelihood=u_soft_m)
+        #         voa += score * soft_m[pose_h]
+        #         bm.reset()
+        #     print(sensor_id, ' VOA: ', voa)
+        # print('__________________')

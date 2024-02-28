@@ -38,12 +38,11 @@ if __name__ == '__main__':
         sim_matrix = np.zeros((5, 5))
         for pose_id in range(5):
             real_image_file = f'../data/objects/ENDSTOP/img/lab/mdi_{sensor_id}_{pose_id}.npy'
-            res = {}
             for pose_id_ in range(5):
                 gen_image_file = f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{pose_id_}.npy'
                 sim_matrix[pose_id, pose_id_] = (
                     sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True))
-                mask_comp(real_image_file, gen_image_file)
+                # mask_comp(real_image_file, gen_image_file)
         print(softmax(sim_matrix))
         sim_matrices.append(softmax(sim_matrix))
     print('done')
