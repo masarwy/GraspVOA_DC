@@ -14,7 +14,8 @@ import trimesh
 if __name__ == '__main__':
     render_scene = False
 
-    object_id = 'ENDSTOP'
+    object_id = 'FLASK'
+    scale = 2.7
     obj_file = '../data/objects/' + object_id + '/object.obj'
     obj_std_poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
     obj_sampled_poses_file = '../data/objects/' + object_id + '/sampled_poses.yaml'
@@ -46,7 +47,7 @@ if __name__ == '__main__':
     yfov = np.radians(camera_params['fov_vertical_rad'])
     aspect_ratio = camera_params['image_width'] / camera_params['image_height']
 
-    obj = Object(obj_file)
+    obj = Object(obj_file, scale=scale)
     render = Render(yfov=yfov, aspectRatio=aspect_ratio, width=camera_params['image_width'],
                     height=camera_params['image_height'])
 

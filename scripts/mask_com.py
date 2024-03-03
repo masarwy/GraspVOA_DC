@@ -1,12 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-sensor_id = 0
-pose_id = 0
+object_id = 'FLASK'
+sensor_id = 5
+pose_id = 3
 pose_id_ = 0
 
-mask1 = np.load(f'../data/objects/ENDSTOP/img/lab/mdi_{sensor_id}_{pose_id}.npy')
-mask2 = np.load(f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{pose_id}.npy')
+mask1 = np.load(f'../data/objects/{object_id}/img/lab/mdi_{sensor_id}_{pose_id}.npy')
+mask2 = np.load(f'../data/objects/{object_id}/img/gen/di_{sensor_id}_{pose_id}.npy')
 mask1 = mask1 != 0.
 mask2 = mask2 != 0.
 

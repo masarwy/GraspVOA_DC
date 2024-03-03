@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     rob = urx.Robot(robot_ip, use_rt=True)
     real_camera = RealCamera('../data/camera_params.yaml')
-    object_pose_id = 5
+    object_pose_id = 3
     for sensor_id in sensor_p_q.keys():
         sen_id = int(sensor_id[-1])
         j_state = sensor_p_q[sensor_id]['joints']

@@ -4,29 +4,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io
 from skimage.color import rgb2lab
+from scipy.ndimage import label, find_objects, binary_fill_holes
 import cv2
 
 if __name__ == '__main__':
-    sen_id = 0
-    obj_pose_id = 1
+    object_id = 'FLASK'
+    sen_id = 5
+    obj_pose_id = 3
 
     # Load the image
-    image_lab = rgb2lab(io.imread(f'../data/objects/ENDSTOP/img/lab/c_{sen_id}_{obj_pose_id}.png'))
+    image_lab = rgb2lab(io.imread(f'../data/objects/{object_id}/img/lab/c_{sen_id}_{obj_pose_id}.png'))
 
     # Apply SLIC segmentation
-    segments = slic(image_lab, n_segments=1500, compactness=10, enforce_connectivity=True)
+    segments = slic(image_lab, n_segments=400, compactness=10, enforce_connectivity=True)
 
     # Calculate properties for each superpixel
     props = regionprops(segments, intensity_image=image_lab)
 
-
-    # Assuming we're looking for a red object
     # Define a function to check if a superpixel's color is within the range for red
-    def is_red(region, red_threshold=30):
-        # In the LAB color space, the 'a' channel represents color on a green-red axis
-        # You may need to adjust the threshold based on your specific image
+    def is_red(region, red_threshold=20):
         return region.mean_intensity[1] > red_threshold
-
 
     # Find labels of superpixels that are red
     red_labels = [region.label for region in props if is_red(region)]
@@ -34,11 +31,26 @@ if __name__ == '__main__':
     # Create a mask for the object
     object_mask = np.isin(segments, red_labels)
 
-    binary_image = (object_mask * 255).astype('uint8')
+    # Label the regions and measure their areas
+    labeled_array, num_features = label(object_mask)
+    sizes = np.bincount(labeled_array.ravel())
+    largest_label = sizes[1:].argmax() + 1  # The 0 label is for the background
+
+    # Keep only the largest region
+    largest_region = (labeled_array == largest_label)
+
+    # Optionally, fill holes in the largest region
+    largest_region_filled = binary_fill_holes(largest_region)
+
+    # Smooth the edges of the largest region
+    smoothed_region = cv2.GaussianBlur(largest_region_filled.astype('uint8'), (5, 5), 0)
+
+    # Convert the largest region back to a binary image (0 and 255)
+    binary_image = (smoothed_region * 255).astype('uint8')
 
     # Save binary image
-    cv2.imwrite(f'../data/objects/ENDSTOP/img/lab/mask_{sen_id}_{obj_pose_id}.png', binary_image)
+    cv2.imwrite(f'../data/objects/{object_id}/img/lab/mask_{sen_id}_{obj_pose_id}.png', binary_image)
 
     # Display the mask
-    plt.imshow(object_mask, cmap='gray')
+    plt.imshow(smoothed_region, cmap='gray')
     plt.show()
