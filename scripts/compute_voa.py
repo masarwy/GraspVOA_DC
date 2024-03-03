@@ -2,7 +2,7 @@ import glob
 
 import numpy as np
 import yaml
-from typing import Tuple
+from typing import Tuple, Optional
 
 from utils.similarity_strategy import *
 from entities.pose_belief import BeliefSpaceModel
@@ -10,21 +10,30 @@ from utils.transform import Point3D
 from scripts.test import dict_softmax
 
 
-def gamma_bar(grasp_score: dict, belief: np.ndarray, true_pose: int = None) -> Tuple[str, float, str]:
+def gamma_bar(grasp_score: dict, belief: np.ndarray, true_pose: int = None, init_g: int = None) -> Tuple[
+    str, float, Optional[str], Optional[float], Optional[float], Optional[float]]:
     dim1 = len(grasp_score)
     unique_keys = set(key for inner_dict in grasp_score.values() for key in inner_dict.keys())
     dim2 = len(unique_keys)
-    table = np.zeros((dim2, dim1))
+    w_table = np.zeros((dim2, dim1))
+    table = w_table.copy()
     for p in range(dim2):
         for g in range(dim1):
-            table[p, g] = grasp_score[f'G{g + 1}'][f'P{p + 1}'] * belief[p]
-    column_sums = np.sum(table, axis=0)
+            w_table[p, g] = grasp_score[f'G{g + 1}'][f'P{p + 1}'] * belief[p]
+            table[p, g] = grasp_score[f'G{g + 1}'][f'P{p + 1}']
+    column_sums = np.sum(w_table, axis=0)
     best_grasp = column_sums.argmax()
     true_best = None
+    real_score = None
+    init_score = None
+    true_score = None
     if true_pose is not None:
         idx = table[true_pose, :].argmax()
+        true_score = table[true_pose, idx]
         true_best = f'G{idx + 1}'
-    return f'G{best_grasp + 1}', column_sums[best_grasp], true_best
+        real_score = table[true_pose, best_grasp]
+        init_score = table[true_pose, init_g]
+    return f'G{best_grasp + 1}', column_sums[best_grasp], true_best, true_score, real_score, init_score
 
 
 def compute_best_grasp(grasp_score: dict, likelihood: dict) -> Tuple[str, float]:
@@ -108,7 +117,7 @@ if __name__ == '__main__':
             b = np.array([1 / n_poses] * n_poses)
             for i, sampled_pose in enumerate(sampled_poses):
                 b[i] = soft_m[sampled_pose]
-            init_x_star, score, _ = gamma_bar(grasp_score=grasp_score, belief=b)
+            init_x_star, score, _, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=b)
             print(init_x_star, score)
             print('_______________________________')
             voa = -score
@@ -117,9 +126,9 @@ if __name__ == '__main__':
                 for j, pose_a in enumerate(sampled_poses.keys()):
                     new_b[j] = b[j] * softmax_matrix[i, j]
                 new_b /= new_b.sum()
-                x_star, score, actual = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
+                x_star, score, actual, real_score, _, _ = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
                 if i == 0:
-                    print(x_star, score, actual)
+                    print(x_star, score, actual, real_score)
                 voa += score * b[i]
             print(sensor_id, ' VOA: ', voa)
 

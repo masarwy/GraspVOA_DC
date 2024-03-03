@@ -1,6 +1,6 @@
 standard_poses:
   C1:
-    probability: 0.1
+    probability: 0.05
     orientation: [3.0892327760299634, 0.0, 0.0]
     position_offset: [0.0, 0.0, 0.05115]
   C2:
@@ -8,7 +8,7 @@ standard_poses:
     orientation: [-1.2740903539558606, 0.0, 0.0]
     position_offset: [0.0, 0.0, 0.02851]
   C3:
-    probability: 0.3
+    probability: 0.4
     orientation: [0.0, 1.5707963267948966, 0.0]
     position_offset: [0.0, 0.0, 0.0157]
   C4:
@@ -16,6 +16,6 @@ standard_poses:
     orientation: [0.0, -1.5707963267948966, 0.0]
     position_offset: [0.0, 0.0, 0.0157]
   C5:
-    probability: 0.1
+    probability: 0.05
     orientation: [1.5707963267948966, 0.0, 0.0]
     position_offset: [0.0, 0.0, 0.03249]

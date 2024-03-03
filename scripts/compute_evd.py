@@ -44,11 +44,11 @@ if __name__ == '__main__':
             likelihood = compute_likelihood(belief=bm, poses=sampled_poses, parts=particles)
             soft_m = dict_softmax(likelihood)
 
-            b = np.array([1 / n_poses] * n_poses)
+            b = np.array([0] * n_poses)
             for i, sampled_pose in enumerate(sampled_poses):
                 b[i] = soft_m[sampled_pose]
 
-            init_x_star, score, _ = gamma_bar(grasp_score=grasp_score, belief=b)
+            init_x_star, score, _, _ = gamma_bar(grasp_score=grasp_score, belief=b)
             evd = -score
             print(init_x_star, score)
             print('_______________________________')
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                 soft_arr = exp_x / exp_x.sum()
                 new_b = b * soft_arr
                 new_b /= new_b.sum()
-                x_star, score, true_x = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
+                x_star, score, true_x, _ = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
                 if i == 0:
                     print(x_star, score, true_x)
                 evd += score * b[i]
