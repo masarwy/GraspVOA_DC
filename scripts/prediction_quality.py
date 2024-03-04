@@ -32,18 +32,26 @@ if __name__ == '__main__':
     object_id = 'FLASK'
     sim_context = SimilarityContext()
     strategies = [StructureTermStrategy(), IoUStrategy(), ContourMatchStrategy()]
-
-    sim_context.set_strategy(strategy=strategies[0])
-    sim_matrices = []
+    sim_matrices = [[], [], [], [], [], []]
+    for sim in strategies:
+        sim_context.set_strategy(strategy=sim)
+        for sensor_id in range(6):
+            sim_matrix = np.zeros((4, 4))
+            for pose_id in range(4):
+                real_image_file = f'../data/objects/{object_id}/img/lab/mdi_{sensor_id}_{pose_id}.npy'
+                for pose_id_ in range(4):
+                    gen_image_file = f'../data/objects/{object_id}/img/gen/di_{sensor_id}_{pose_id_}.npy'
+                    sim_matrix[pose_id, pose_id_] = (
+                        sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True))
+                    # mask_comp(real_image_file, gen_image_file)
+            # print(softmax(sim_matrix))
+            sim_matrices[sensor_id].append(softmax(sim_matrix))
+    res = [np.zeros((4, 4))] * 6
     for sensor_id in range(6):
-        sim_matrix = np.zeros((4, 4))
-        for pose_id in range(4):
-            real_image_file = f'../data/objects/{object_id}/img/lab/mdi_{sensor_id}_{pose_id}.npy'
-            for pose_id_ in range(4):
-                gen_image_file = f'../data/objects/{object_id}/img/gen/di_{sensor_id}_{pose_id_}.npy'
-                sim_matrix[pose_id, pose_id_] = (
-                    sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True))
-                # mask_comp(real_image_file, gen_image_file)
-        print(softmax(sim_matrix))
-        sim_matrices.append(softmax(sim_matrix))
+        matrix1 = sim_matrices[sensor_id][0]
+        matrix2 = sim_matrices[sensor_id][1]
+        matrix3 = sim_matrices[sensor_id][2]
+        alpha = 0.3
+        res[sensor_id] = alpha * matrix1 + (1-alpha) * matrix2
+        print(res[sensor_id])
     print('done')
