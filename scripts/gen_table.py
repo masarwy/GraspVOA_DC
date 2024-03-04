@@ -49,12 +49,12 @@ if __name__ == '__main__':
 
     row = ['']
     for pose in sampled_poses.keys():
-        row.extend([pose] + [''] * 13)
+        row.extend([pose] + [''] * 16)
     row.append('VOA')
     rows.append(row)
     temp_row = ['init_x_star', 'init_score', 'init_exp_score', 'actual_x_star', 'actual_score', 'actual_exp_score',
                 'pred_x_star', 'pred_grasp_score', 'pred_exp_score', 'full_info_g', 'full_info_score',
-                'pose_prev_belief', 'pose_pred_belief', 'pose_actual_belief'] * n_poses
+                'pose_prev_belief', 'pose_pred_belief', 'pose_actual_belief', 'init_b', 'pred_b', 'act_b'] * n_poses
     rows.append(['sensor conf.'] + temp_row)
 
     for sim in sims:
@@ -121,7 +121,7 @@ if __name__ == '__main__':
                 print(pose_h, actual_x_star, actual_score, pred_x_star, pred_grasp_score)
                 row.extend([init_x_star, init_score, init_exp_score, actual_x_star, actual_score, actual_exp_score,
                             pred_x_star, pred_grasp_score, pred_exp_score, full_info_g, full_info_score,
-                            pose_prev_belief, pose_pred_belief, pose_actual_belief])
+                            pose_prev_belief, pose_pred_belief, pose_actual_belief, pred_b, new_pred_b, new_actual_b])
                 voa += (pred_grasp_score - init_score) * pred_b[i]
             row.append(voa)
             print(sensor_id, ' VOA: ', voa)

@@ -48,7 +48,7 @@ if __name__ == '__main__':
             for i, sampled_pose in enumerate(sampled_poses):
                 b[i] = soft_m[sampled_pose]
 
-            init_x_star, score, _, _ = gamma_bar(grasp_score=grasp_score, belief=b)
+            init_x_star, score, _, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=b)
             evd = -score
             print(init_x_star, score)
             print('_______________________________')
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                 soft_arr = exp_x / exp_x.sum()
                 new_b = b * soft_arr
                 new_b /= new_b.sum()
-                x_star, score, true_x, _ = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
+                x_star, score, true_x, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
                 if i == 0:
                     print(x_star, score, true_x)
                 evd += score * b[i]

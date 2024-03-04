@@ -29,17 +29,18 @@ def mask_comp(image_a_file: str, image_b_file: str):
 
 
 if __name__ == '__main__':
+    object_id = 'FLASK'
     sim_context = SimilarityContext()
     strategies = [StructureTermStrategy(), IoUStrategy(), ContourMatchStrategy()]
 
-    sim_context.set_strategy(strategy=strategies[2])
+    sim_context.set_strategy(strategy=strategies[0])
     sim_matrices = []
     for sensor_id in range(6):
-        sim_matrix = np.zeros((5, 5))
-        for pose_id in range(5):
-            real_image_file = f'../data/objects/ENDSTOP/img/lab/mdi_{sensor_id}_{pose_id}.npy'
-            for pose_id_ in range(5):
-                gen_image_file = f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{pose_id_}.npy'
+        sim_matrix = np.zeros((4, 4))
+        for pose_id in range(4):
+            real_image_file = f'../data/objects/{object_id}/img/lab/mdi_{sensor_id}_{pose_id}.npy'
+            for pose_id_ in range(4):
+                gen_image_file = f'../data/objects/{object_id}/img/gen/di_{sensor_id}_{pose_id_}.npy'
                 sim_matrix[pose_id, pose_id_] = (
                     sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True))
                 # mask_comp(real_image_file, gen_image_file)
