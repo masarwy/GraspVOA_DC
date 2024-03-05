@@ -3,6 +3,7 @@ import math
 import cv2
 from typing import Optional, Tuple, List
 import matplotlib.pyplot as plt
+from scipy.stats import wasserstein_distance
 
 from entities.real_camera import preprocess_depth_image
 
@@ -267,6 +268,34 @@ class FeatureBasedMatchingStrategy(SimilarityStrategy):
             similarity = 1 / (1 + average_distance)  # Transform distance to similarity
         else:
             similarity = 0  # No matches found
+
+        return similarity
+
+
+class EMDSimilarityStrategy(SimilarityStrategy):
+    def __init__(self):
+        super().__init__('Earth Mover\'s Distance Similarity')
+
+    def __call__(self, image_file_a: str, image_file_b: str, a_is_real: bool = False) -> float:
+        img_a = np.load(image_file_a)
+
+        if a_is_real:
+            img_a = preprocess_depth_image(img_a)
+        img_a = img_a.flatten()
+
+        img_b = np.load(image_file_b).flatten()
+
+        # Normalize the histograms to sum to 1, if not already
+        if np.sum(img_a) != 1.0:
+            img_a = img_a / np.sum(img_a)
+        if np.sum(img_b) != 1.0:
+            img_b = img_b / np.sum(img_b)
+
+        # Calculate EMD
+        emd_value = wasserstein_distance(img_a, img_b)
+
+        # Invert the distance to represent similarity (lower distance = higher similarity)
+        similarity = 1 / (1 + emd_value)
 
         return similarity
 
