@@ -114,6 +114,7 @@ if __name__ == '__main__':
                 actual_soft_arr = actual_exp_x / actual_exp_x.sum()
                 new_actual_b = actual_b * actual_soft_arr
                 new_actual_b /= new_actual_b.sum()
+
                 pose_actual_belief = new_actual_b[i]
                 actual_x_star, actual_exp_score, _, _, actual_score, _ = gamma_bar(grasp_score=grasp_score,
                                                                                    belief=new_actual_b, true_pose=i)

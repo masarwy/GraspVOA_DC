@@ -1,7 +1,8 @@
 import numpy as np
 import math
 import cv2
-from typing import Optional
+from typing import Optional, Tuple, List
+import matplotlib.pyplot as plt
 
 from entities.real_camera import preprocess_depth_image
 
@@ -86,29 +87,79 @@ class ContourMatchStrategy(SimilarityStrategy):
 
     def __call__(self, image_file_a: str, image_file_b: str, a_is_real: bool = False) -> float:
         ref_mask = np.load(image_file_a)
+        if a_is_real:
+            ref_mask = preprocess_depth_image(ref_mask)
+
         ref_image = np.where(ref_mask != 0, 255, 0).astype(np.uint8)
         ref_contours, _ = cv2.findContours(ref_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         ref_contour = max(ref_contours, key=cv2.contourArea)
 
         target_image = np.load(image_file_b)
         target_image = np.where(target_image != 0, 255, 0).astype(np.uint8)
-        res = self.find_min_similarity(target_image, ref_contour)
-        return 10 * math.exp(-10 * res)
+        res, contour_2 = self.find_min_similarity(target_image, ref_contour, visualize=False)
+        res2 = self.calculate_centroid_distance(contour1=ref_contour, contour2=contour_2)
+
+        return 1 / (1 + res + res2)
 
     @staticmethod
-    def find_min_similarity(target_image, ref_contour) -> float:
-        # Find contours in the target image
+    def calculate_centroid_distance(contour1, contour2):
+        # Calculate the moments of the contours
+        M1 = cv2.moments(contour1)
+        M2 = cv2.moments(contour2)
+
+        # Calculate the centroids
+        if M1["m00"] != 0 and M2["m00"] != 0:
+            cx1, cy1 = int(M1["m10"] / M1["m00"]), int(M1["m01"] / M1["m00"])
+            cx2, cy2 = int(M2["m10"] / M2["m00"]), int(M2["m01"] / M2["m00"])
+        else:
+            # Handling the case of division by zero
+            cx1, cy1, cx2, cy2 = 0, 0, 0, 0
+
+        # Calculate the Euclidean distance between the centroids
+        distance = np.sqrt((cx2 - cx1) ** 2 + (cy2 - cy1) ** 2)
+        return distance
+
+    @staticmethod
+    def find_min_similarity(target_image, ref_contour, visualize=False) -> Tuple[float, List]:
         contours, _ = cv2.findContours(target_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-        # Initialize the minimum similarity score to a high value
         min_similarity = np.inf
+        min_similarity_contour = None
 
-        # Compare each contour in the target image to the reference contour
+        vis_image = None
+        if visualize:
+            # Create a white canvas for visualization if visualization is enabled
+            h, w = target_image.shape[:2]
+            vis_image = np.ones((h, w, 3), dtype=np.uint8) * 255
+
         for contour in contours:
             similarity = cv2.matchShapes(ref_contour, contour, cv2.CONTOURS_MATCH_I1, 0.0)
-            min_similarity = min(min_similarity, similarity)
+            if similarity < min_similarity:
+                min_similarity = similarity
+                min_similarity_contour = contour
 
-        return min_similarity
+            if visualize:
+                # Draw the current contour and the reference contour on the canvas for comparison
+                cv2.drawContours(vis_image, [contour], -1, (255, 0, 0), 2)  # Draw current contour in blue
+                cv2.drawContours(vis_image, [ref_contour], -1, (0, 255, 0), 2)  # Draw reference contour in green
+
+                # Show the visualization
+                plt.figure(figsize=(5, 5))
+                plt.title(f"Contour Similarity: {similarity:.4f}")
+                plt.imshow(vis_image)
+                plt.axis('off')
+                plt.show()
+
+        if visualize and min_similarity_contour is not None:
+            # Highlight the most similar contour in a different color if visualization is enabled
+            cv2.drawContours(vis_image, [min_similarity_contour], -1, (0, 0, 255),
+                             3)  # Draw most similar contour in red
+            plt.figure(figsize=(5, 5))
+            plt.title("Most Similar Contour")
+            plt.imshow(vis_image)
+            plt.axis('off')
+            plt.show()
+
+        return min_similarity, min_similarity_contour
 
 
 class IoUStrategy(SimilarityStrategy):
@@ -147,6 +198,77 @@ class HuMomentsStrategy(SimilarityStrategy):
         hu_score = np.sum(np.abs(moments_a - moments_b))
 
         return hu_score
+
+
+class TemplateMatchingStrategy(SimilarityStrategy):
+    def __init__(self):
+        super().__init__('Template Matching Similarity')
+
+    def __call__(self, image_file_a: str, image_file_b: str, a_is_real: bool = False) -> float:
+        # Load .npy images
+        img_a = np.load(image_file_a)
+        img_b = np.load(image_file_b)
+
+        if a_is_real:
+            img_a = preprocess_depth_image(img_a)
+
+        # Ensure images are 2D (grayscale)
+        if img_a.ndim > 2:
+            img_a = cv2.cvtColor(img_a, cv2.COLOR_BGR2GRAY)
+        if img_b.ndim > 2:
+            img_b = cv2.cvtColor(img_b, cv2.COLOR_BGR2GRAY)
+
+        # Ensure images are of type float32 or convert them to uint8
+        if img_a.dtype != np.uint8:
+            img_a = (img_a * 255).astype(np.uint8)
+        if img_b.dtype != np.uint8:
+            img_b = (img_b * 255).astype(np.uint8)
+
+        # Apply template matching
+        res = cv2.matchTemplate(img_a, img_b, cv2.TM_CCOEFF_NORMED)
+        _, max_val, _, _ = cv2.minMaxLoc(res)
+
+        # Return the highest matching score
+        return max_val
+
+
+class FeatureBasedMatchingStrategy(SimilarityStrategy):
+    def __init__(self):
+        super().__init__('Feature Based Matching Similarity')
+
+    def __call__(self, image_file_a: str, image_file_b: str, a_is_real: bool = False) -> float:
+        # Load .npy images
+        img_a = np.load(image_file_a)
+        img_b = np.load(image_file_b)
+
+        if a_is_real:
+            img_a = preprocess_depth_image(img_a)
+
+        # Ensure images are in BGR if they are grayscale for feature detection
+        if img_a.ndim == 2:
+            img_a = cv2.cvtColor(img_a, cv2.COLOR_GRAY2BGR)
+        if img_b.ndim == 2:
+            img_b = cv2.cvtColor(img_b, cv2.COLOR_GRAY2BGR)
+
+        # Initialize ORB detector
+        orb = cv2.ORB_create()
+
+        # Detect keypoints and descriptors
+        kp_a, des_a = orb.detectAndCompute(img_a, None)
+        kp_b, des_b = orb.detectAndCompute(img_b, None)
+
+        # Create BFMatcher object and match descriptors
+        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        matches = bf.match(des_a, des_b)
+
+        # Calculate the similarity as the inverse of the average distance of the best matches
+        if matches:
+            average_distance = sum(match.distance for match in matches) / len(matches)
+            similarity = 1 / (1 + average_distance)  # Transform distance to similarity
+        else:
+            similarity = 0  # No matches found
+
+        return similarity
 
 
 class SimilarityContext:
