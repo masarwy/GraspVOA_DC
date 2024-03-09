@@ -14,8 +14,8 @@ import trimesh
 if __name__ == '__main__':
     render_scene = False
 
-    object_id = 'FLASK'
-    scale = 2.7
+    object_id = 'EXPO'
+    scale = 1.
     obj_file = '../data/objects/' + object_id + '/object.obj'
     obj_std_poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
     obj_sampled_poses_file = '../data/objects/' + object_id + '/sampled_poses.yaml'
@@ -78,6 +78,7 @@ if __name__ == '__main__':
     counter = 0
     for t in transforms:
         obj.set_transform(t)
+        obj.elevate_mesh_to_zero()
         if render_scene:
             scene = trimesh.Scene()
             scene.add_geometry(obj.get_mesh())

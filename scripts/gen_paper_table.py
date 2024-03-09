@@ -97,11 +97,11 @@ if __name__ == '__main__':
             for i, pose_h in enumerate(sampled_poses.keys()):
                 new_pred_b = np.zeros_like(pred_b)
                 actual_sim_arr = np.zeros_like(actual_b)
-                real_image_file = f'../data/objects/ENDSTOP/img/lab/mdi_{sensor_id}_{i}.npy'
+                real_image_file = f'../data/objects/{object_id}/img/lab/mdi_{sensor_id}_{i}.npy'
                 pose_prev_belief = pred_b[i]
                 for j, pose_a in enumerate(sampled_poses.keys()):
                     new_pred_b[j] = pred_b[j] * softmax_matrix[i, j]
-                    gen_image_file = f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{j}.npy'
+                    gen_image_file = f'../data/objects/{object_id}/img/gen/di_{sensor_id}_{j}.npy'
                     actual_sim_arr[j] = sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True)
 
                 new_pred_b /= new_pred_b.sum()
