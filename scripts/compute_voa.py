@@ -11,7 +11,7 @@ from scripts.test import dict_softmax
 
 
 def gamma_bar(grasp_score: dict, belief: np.ndarray, true_pose: int = None, init_g: int = None) -> Tuple[
-    str, float, Optional[str], Optional[float], Optional[float], Optional[float]]:
+    str, float, Optional[str], Optional[float], Optional[float], Optional[float], Optional[float]]:
     dim1 = len(grasp_score)
     unique_keys = set(key for inner_dict in grasp_score.values() for key in inner_dict.keys())
     dim2 = len(unique_keys)
@@ -27,13 +27,15 @@ def gamma_bar(grasp_score: dict, belief: np.ndarray, true_pose: int = None, init
     real_score = None
     init_score = None
     true_score = None
+    exp_true_grasp = None
     if true_pose is not None:
         idx = table[true_pose, :].argmax()
         true_score = table[true_pose, idx]
+        exp_true_grasp = column_sums[idx]
         true_best = f'G{idx + 1}'
         real_score = table[true_pose, best_grasp]
         init_score = table[true_pose, init_g]
-    return f'G{best_grasp + 1}', column_sums[best_grasp], true_best, true_score, real_score, init_score
+    return f'G{best_grasp + 1}', column_sums[best_grasp], true_best, true_score, real_score, init_score, exp_true_grasp
 
 
 def compute_best_grasp(grasp_score: dict, likelihood: dict) -> Tuple[str, float]:
@@ -117,7 +119,7 @@ if __name__ == '__main__':
             b = np.array([1 / n_poses] * n_poses)
             for i, sampled_pose in enumerate(sampled_poses):
                 b[i] = soft_m[sampled_pose]
-            init_x_star, score, _, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=b)
+            init_x_star, score, _, _, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=b)
             print(init_x_star, score)
             print('_______________________________')
             voa = -score
@@ -126,7 +128,8 @@ if __name__ == '__main__':
                 for j, pose_a in enumerate(sampled_poses.keys()):
                     new_b[j] = b[j] * softmax_matrix[i, j]
                 new_b /= new_b.sum()
-                x_star, score, actual, real_score, _, _ = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
+                x_star, score, actual, real_score, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=new_b,
+                                                                       true_pose=i)
                 if i == 0:
                     print(x_star, score, actual, real_score)
                 voa += score * b[i]

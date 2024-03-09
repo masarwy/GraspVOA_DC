@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     rows = []
 
-    object_id = 'ENDSTOP'
+    object_id = 'FLASK'
     obj_file = '../data/objects/' + object_id + '/object.obj'
     obj_std_poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
     obj_sampled_poses_file = '../data/objects/' + object_id + '/sampled_poses.yaml'
@@ -40,6 +40,10 @@ if __name__ == '__main__':
     init_x_star, init_exp_score, _, _, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=pred_b)
     init_x_star_id = int(init_x_star[1]) - 1
 
+    init_g_star = [0] * len(sampled_poses.keys())
+    for i, pose_h in enumerate(sampled_poses.keys()):
+        _, _, _, _, _, _, init_g_star[i] = gamma_bar(grasp_score=grasp_score, belief=pred_b, true_pose=i)
+
     actual_likelihood = compute_likelihood(belief=bm, poses=sampled_poses, parts=particles)
     actual_soft_m = dict_softmax(actual_likelihood)
 
@@ -48,13 +52,11 @@ if __name__ == '__main__':
         actual_b[i] = actual_soft_m[sampled_pose]
 
     row = ['']
-    for pose in sampled_poses.keys():
-        row.extend([pose] + [''] * 16)
+    for i, pose in enumerate(sampled_poses.keys()):
+        row.extend([pose, pred_b[i]] + [''] * 3)
     row.append('VOA')
     rows.append(row)
-    temp_row = ['init_x_star', 'init_score', 'init_exp_score', 'actual_x_star', 'actual_score', 'actual_exp_score',
-                'pred_x_star', 'pred_grasp_score', 'pred_exp_score', 'full_info_g', 'full_info_score',
-                'pose_prev_belief', 'pose_pred_belief', 'pose_actual_belief', 'init_b', 'pred_b', 'act_b'] * n_poses
+    temp_row = ['\u03B4', 'confidence of g', '\u03B4*', 'advantage', 'confidence of g*'] * n_poses
     rows.append(['sensor conf.'] + temp_row)
 
     for sim in sims:
@@ -116,19 +118,29 @@ if __name__ == '__main__':
                 new_actual_b /= new_actual_b.sum()
 
                 pose_actual_belief = new_actual_b[i]
-                actual_x_star, actual_exp_score, _, _, actual_score, _, _ = gamma_bar(grasp_score=grasp_score,
-                                                                                   belief=new_actual_b, true_pose=i)
+                actual_x_star, actual_exp_score, _, true_best_score, actual_score, _, actual_exp_best = gamma_bar(
+                    grasp_score=grasp_score, belief=new_actual_b, true_pose=i)
 
                 print(pose_h, actual_x_star, actual_score, pred_x_star, pred_grasp_score)
-                row.extend([init_x_star, init_score, init_exp_score, actual_x_star, actual_score, actual_exp_score,
-                            pred_x_star, pred_grasp_score, pred_exp_score, full_info_g, full_info_score,
-                            pose_prev_belief, pose_pred_belief, pose_actual_belief, pred_b, new_pred_b, new_actual_b])
+                row.extend([pred_grasp_score - init_score, actual_exp_score - init_exp_score,
+                            actual_score - init_score if true_best_score == init_score else (
+                                                                                                    actual_score - init_score) / (
+                                                                                                    true_best_score - init_score),
+                            0, actual_exp_best - init_g_star[i]])
                 voa += (pred_grasp_score - init_score) * pred_b[i]
             row.append(voa)
             print(sensor_id, ' VOA: ', voa)
             rows.append(row)
 
-    filename = f'../results/{object_id}/res.csv'
+    for k in range(3):
+        for j in range(4, 19, 5):
+            avg = 0
+            for i in range(2 + k * 6, 1 + (k + 1) * 6):
+                avg += rows[i][j - 2] / 6
+            for i in range(2 + k * 6, 1 + (k + 1) * 6):
+                rows[i][j] = rows[i][j - 2] - avg
+
+    filename = f'../results/{object_id}/paper_res.csv'
     with open(filename, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerows(rows)
