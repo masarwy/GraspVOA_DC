@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     rows = []
 
-    object_id = 'ENDSTOP'
+    object_id = 'FLASK'
     obj_file = '../data/objects/' + object_id + '/object.obj'
     obj_std_poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
     obj_sampled_poses_file = '../data/objects/' + object_id + '/sampled_poses.yaml'
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     pred_b = np.array([1 / n_poses] * n_poses)
     for i, sampled_pose in enumerate(sampled_poses):
         pred_b[i] = pred_soft_m[sampled_pose]
-    init_x_star, init_exp_score, _, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=pred_b)
+    init_x_star, init_exp_score, _, _, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=pred_b)
     init_x_star_id = int(init_x_star[1]) - 1
 
     actual_likelihood = compute_likelihood(belief=bm, poses=sampled_poses, parts=particles)
@@ -95,16 +95,16 @@ if __name__ == '__main__':
             for i, pose_h in enumerate(sampled_poses.keys()):
                 new_pred_b = np.zeros_like(pred_b)
                 actual_sim_arr = np.zeros_like(actual_b)
-                real_image_file = f'../data/objects/ENDSTOP/img/lab/mdi_{sensor_id}_{i}.npy'
+                real_image_file = f'../data/objects/{object_id}/img/lab/mdi_{sensor_id}_{i}.npy'
                 pose_prev_belief = pred_b[i]
                 for j, pose_a in enumerate(sampled_poses.keys()):
                     new_pred_b[j] = pred_b[j] * softmax_matrix[i, j]
-                    gen_image_file = f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{j}.npy'
+                    gen_image_file = f'../data/objects/{object_id}/img/gen/di_{sensor_id}_{j}.npy'
                     actual_sim_arr[j] = sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True)
 
                 new_pred_b /= new_pred_b.sum()
                 pose_pred_belief = new_pred_b[i]
-                pred_x_star, pred_exp_score, full_info_g, full_info_score, pred_grasp_score, init_score = gamma_bar(
+                pred_x_star, pred_exp_score, full_info_g, full_info_score, pred_grasp_score, init_score, _ = gamma_bar(
                     grasp_score=grasp_score,
                     belief=new_pred_b,
                     true_pose=i,
@@ -116,7 +116,7 @@ if __name__ == '__main__':
                 new_actual_b /= new_actual_b.sum()
 
                 pose_actual_belief = new_actual_b[i]
-                actual_x_star, actual_exp_score, _, _, actual_score, _ = gamma_bar(grasp_score=grasp_score,
+                actual_x_star, actual_exp_score, _, _, actual_score, _, _ = gamma_bar(grasp_score=grasp_score,
                                                                                    belief=new_actual_b, true_pose=i)
 
                 print(pose_h, actual_x_star, actual_score, pred_x_star, pred_grasp_score)
@@ -128,7 +128,7 @@ if __name__ == '__main__':
             print(sensor_id, ' VOA: ', voa)
             rows.append(row)
 
-        filename = f'../results/{object_id}/res.csv'
-        with open(filename, 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(rows)
+    filename = f'../results/{object_id}/res.csv'
+    with open(filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(rows)

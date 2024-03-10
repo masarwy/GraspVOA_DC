@@ -48,21 +48,21 @@ if __name__ == '__main__':
             for i, sampled_pose in enumerate(sampled_poses):
                 b[i] = soft_m[sampled_pose]
 
-            init_x_star, score, _, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=b)
+            init_x_star, score, _, _, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=b)
             evd = -score
             print(init_x_star, score)
             print('_______________________________')
             for i, pose in enumerate(sampled_poses):
                 sim_arr = np.zeros_like(b)
-                real_image_file = f'../data/objects/ENDSTOP/img/lab/mdi_{sensor_id}_{i}.npy'
+                real_image_file = f'../data/objects/{object_id}/img/lab/mdi_{sensor_id}_{i}.npy'
                 for j, pose_ in enumerate(sampled_poses):
-                    gen_image_file = f'../data/objects/ENDSTOP/img/gen/di_{sensor_id}_{j}.npy'
+                    gen_image_file = f'../data/objects/{object_id}/img/gen/di_{sensor_id}_{j}.npy'
                     sim_arr[j] = sim_context.compare_images(real_image_file, gen_image_file, a_is_real=True)
                 exp_x = np.exp(sim_arr - np.max(sim_arr))
                 soft_arr = exp_x / exp_x.sum()
                 new_b = b * soft_arr
                 new_b /= new_b.sum()
-                x_star, score, true_x, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
+                x_star, score, true_x, _, _, _, _ = gamma_bar(grasp_score=grasp_score, belief=new_b, true_pose=i)
                 if i == 0:
                     print(x_star, score, true_x)
                 evd += score * b[i]

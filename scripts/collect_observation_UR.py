@@ -11,11 +11,11 @@ if __name__ == '__main__':
     sensor_poses_file = '../data/poses_and_joints.yaml'
     sensor_p_q = read_sensor_configs(sensor_poses_file)
 
-    object_id = 'FLASK'
+    object_id = 'EXPO'
 
     rob = urx.Robot(robot_ip, use_rt=True)
     real_camera = RealCamera('../data/camera_params.yaml')
-    object_pose_id = 3
+    object_pose_id = 0
     for sensor_id in sensor_p_q.keys():
         sen_id = int(sensor_id[-1])
         j_state = sensor_p_q[sensor_id]['joints']

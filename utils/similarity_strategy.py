@@ -4,6 +4,7 @@ import cv2
 from typing import Optional, Tuple, List
 import matplotlib.pyplot as plt
 from scipy.stats import wasserstein_distance
+from sklearn.cluster import KMeans
 
 from entities.real_camera import preprocess_depth_image
 
@@ -296,6 +297,64 @@ class EMDSimilarityStrategy(SimilarityStrategy):
 
         # Invert the distance to represent similarity (lower distance = higher similarity)
         similarity = 1 / (1 + emd_value)
+
+        return similarity
+
+
+class ModEMDSimilarityStrategy(SimilarityStrategy):
+    def __init__(self):
+        super().__init__('Earth Mover\'s Distance Similarity')
+
+    @staticmethod
+    def create_image_signature(image, n_clusters=5):
+        # Assuming image is 2D (grayscale), flatten it and get pixel coordinates
+        x, y = np.indices(image.shape)
+        features = np.stack((image.flatten(), x.flatten(), y.flatten()), axis=1)
+
+        # Use KMeans to cluster features
+        kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(features)
+
+        # Cluster centers will be the signature
+        signature = kmeans.cluster_centers_
+
+        # Ensure non-negative weights
+        signature[:, 0] = np.abs(signature[:, 0])  # Use absolute values to avoid negative weights
+
+        # Normalize the weights
+        signature[:, 0] /= signature[:, 0].sum()
+
+        return signature
+
+    @staticmethod
+    def calculate_emd_signature(signature_a, signature_b):
+        # Extract weights and features from signatures
+        weights_a, features_a = signature_a[:, 0], signature_a[:, 1:]
+        weights_b, features_b = signature_b[:, 0], signature_b[:, 1:]
+
+        # Compute EMD using weights and features
+        emd_total = sum(
+            wasserstein_distance(features_a[:, i], features_b[:, i], u_weights=weights_a, v_weights=weights_b) for i in
+            range(features_a.shape[1]))
+
+        return emd_total
+
+    def __call__(self, image_file_a: str, image_file_b: str, a_is_real: bool = False) -> float:
+        # Load and optionally preprocess the images
+        img_a = np.load(image_file_a)
+        if a_is_real:
+            img_a = preprocess_depth_image(img_a)  # Ensure this function exists and is correct
+
+        img_b = np.load(image_file_b)
+
+        # Create signatures from images
+        signature_a = self.create_image_signature(img_a)
+        signature_b = self.create_image_signature(img_b)
+
+        # Calculate EMD using signatures
+        emd_value = self.calculate_emd_signature(signature_a, signature_b)
+
+        # Invert the distance to represent similarity (lower distance = higher similarity)
+        similarity = 1000 / (1 + emd_value)
 
         return similarity
 

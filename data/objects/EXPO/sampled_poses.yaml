@@ -1,0 +1,33 @@
+poses:
+  P1:
+    orientation: [-1.5707963267948966, 0, 0.0]
+    position_offset: [-1.2, -1., 0.03]
+    our_rep:
+      category: 'C1'
+      angle: 0.
+      x: -1.2
+      y: -1.
+  P2:
+    orientation: [0.0, -0.0, -1.5707963267948966]
+    position_offset: [-1.2, -1., 0.005]
+    our_rep:
+      category: 'C2'
+      angle: -1.5707963267948966
+      x: -1.2
+      y: -1.
+  P3:
+    orientation: [0.0, 0.0, 0.0]
+    position_offset: [-1.2, -1., 0.005]
+    our_rep:
+      category: 'C2'
+      angle: -1.5707963267948966
+      x: -1.2
+      y: -1.
+  P4:
+    orientation: [0.0, 0.0, 0.0]
+    position_offset: [-1.2, -0.97, 0.005]
+    our_rep:
+      category: 'C2'
+      angle: -1.5707963267948966
+      x: -1.2
+      y: -0.97

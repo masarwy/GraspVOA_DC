@@ -8,9 +8,9 @@ from scipy.ndimage import label, find_objects, binary_fill_holes
 import cv2
 
 if __name__ == '__main__':
-    object_id = 'FLASK'
-    sen_id = 5
-    obj_pose_id = 3
+    object_id = 'EXPO'
+    sen_id = 0
+    obj_pose_id = 0
 
     # Load the image
     image_lab = rgb2lab(io.imread(f'../data/objects/{object_id}/img/lab/c_{sen_id}_{obj_pose_id}.png'))

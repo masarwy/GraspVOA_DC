@@ -2,9 +2,9 @@ import cv2
 import numpy as np
 
 if __name__ == "__main__":
-    object_id = 'FLASK'
-    sen_id = 5
-    obj_pose_id = 3
+    object_id = 'EXPO'
+    sen_id = 0
+    obj_pose_id = 0
     binary_mask_path = f'../data/objects/{object_id}/img/lab/mask_{sen_id}_{obj_pose_id}.png'
     depth_image_path = f'../data/objects/{object_id}/img/lab/di_{sen_id}_{obj_pose_id}.npy'
     save_path = f'../data/objects/{object_id}/img/lab/mdi_{sen_id}_{obj_pose_id}.npy'
