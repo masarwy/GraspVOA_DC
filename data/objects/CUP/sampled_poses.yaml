@@ -1,0 +1,49 @@
+poses:
+  P1:
+    orientation: [1.5707963267948966, 1.5707963267948966, 0.0]
+    position_offset: [-1.2, -1., 0.0036]
+    our_rep:
+      category: 'C1'
+      angle: 1.5707963267948966
+      x: -1.2
+      y: -1.
+  P2:
+    orientation: [1.5707963267948966, 3.141592653589793,0.0]
+    position_offset: [-1.2, -1., 0.0036]
+    our_rep:
+      category: 'C1'
+      angle: 3.141592653589793
+      x: -1.2
+      y: -1.
+  P3:
+    orientation: [-1.5707963267948966, 3.141592653589793,0.0]
+    position_offset: [-1.2, -1., 0.0036]
+    our_rep:
+      category: 'C2'
+      angle: 3.141592653589793
+      x: -1.2
+      y: -1.
+  P4:
+    orientation: [1.5707963267948966, -1.5707963267948966, 0.0]
+    position_offset: [-1.2, -1., 0.0036]
+    our_rep:
+      category: 'C1'
+      angle: -1.5707963267948966
+      x: -1.2
+      y: -1.
+  P5:
+    orientation: [1.5707963267948966, 2.35619449, 0.0]
+    position_offset: [-1.2, -1., 0.0036]
+    our_rep:
+      category: 'C1'
+      angle: 2.35619449
+      x: -1.2
+      y: -1.
+  P6:
+    orientation: [1.5707963267948966, -2.35619449, 0.0]
+    position_offset: [-1.2, -1., 0.0036]
+    our_rep:
+      category: 'C1'
+      angle: -2.35619449
+      x: -1.2
+      y: -1.

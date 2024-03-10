@@ -8,9 +8,9 @@ from scipy.ndimage import label, find_objects, binary_fill_holes
 import cv2
 
 if __name__ == '__main__':
-    object_id = 'EXPO'
-    sen_id = 0
-    obj_pose_id = 0
+    object_id = 'MOUSE'
+    sen_id = 5
+    obj_pose_id = 2
 
     # Load the image
     image_lab = rgb2lab(io.imread(f'../data/objects/{object_id}/img/lab/c_{sen_id}_{obj_pose_id}.png'))
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     props = regionprops(segments, intensity_image=image_lab)
 
     # Define a function to check if a superpixel's color is within the range for red
-    def is_red(region, red_threshold=20):
+    def is_red(region, red_threshold=25):
         return region.mean_intensity[1] > red_threshold
 
     # Find labels of superpixels that are red

@@ -14,8 +14,8 @@ import trimesh
 if __name__ == '__main__':
     render_scene = False
 
-    object_id = 'EXPO'
-    scale = 1.
+    object_id = 'MOUSE'
+    scale = 0.33
     obj_file = '../data/objects/' + object_id + '/object.obj'
     obj_std_poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
     obj_sampled_poses_file = '../data/objects/' + object_id + '/sampled_poses.yaml'

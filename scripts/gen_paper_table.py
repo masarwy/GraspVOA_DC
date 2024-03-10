@@ -16,7 +16,7 @@ if __name__ == '__main__':
     rows = []
 
     object_id = 'FLASK'
-    obj_file = '../data/objects/' + object_id + '/object.obj'
+    obj_file = '../data/objects/' + object_id + '/object_.obj'
     obj_std_poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
     obj_sampled_poses_file = '../data/objects/' + object_id + '/sampled_poses.yaml'
     grasp_score_file = '../data/objects/' + object_id + '/grasp_score.yaml'

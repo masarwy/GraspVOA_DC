@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-object_id = 'EXPO'
-sensor_id = 0
-pose_id = 0
+object_id = 'MOUSE'
+sensor_id = 5
+pose_id = 2
 pose_id_ = 0
 
 mask1 = np.load(f'../data/objects/{object_id}/img/lab/mdi_{sensor_id}_{pose_id}.npy')
