@@ -1,11 +1,14 @@
 import numpy as np
 import csv
+import yaml
 
 from utils.sensor_conf import read_sensor_configs
 
 if __name__ == '__main__':
-    object_id = 'FLASK'
-    num_poses = 4
+    object_id = 'EXPO'
+    with open('../data/objects/' + object_id + '/sampled_poses.yaml', 'r') as f:
+        data = yaml.safe_load(f)['poses']
+        num_poses = len(data)
     sensor_poses_file = '../data/poses_and_joints.yaml'
     sensor_p_q = read_sensor_configs(sensor_poses_file)
     poi = np.array([-1.2, -1., 0.])
