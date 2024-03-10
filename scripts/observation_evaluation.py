@@ -10,11 +10,12 @@ if __name__ == '__main__':
     sensor_p_q = read_sensor_configs(sensor_poses_file)
     poi = np.array([-1.2, -1., 0.])
     print(sensor_p_q)
-    rows = [['sensor config.', 'avg. IoU', 'max IoU']]
+    rows = [['sensor config.', 'avg. IoU', 'max IoU', 'min IoU']]
     for i, conf in enumerate(sensor_p_q.keys()):
         row = [f'x_{i}']
         avg = 0
         max_req = 0
+        min_req = np.inf
         pos = np.array([sensor_p_q[conf]['pose'].x, sensor_p_q[conf]['pose'].y, sensor_p_q[conf]['pose'].z])
         dist = np.linalg.norm(poi - pos)
         for pose_id in range(num_poses):
@@ -26,12 +27,13 @@ if __name__ == '__main__':
             union = np.logical_or(mask1, mask2).sum()
             iou = intersection / union if union != 0 else 0
             max_req = max(max_req, iou)
+            min_req = min(min_req, iou)
             print(mask1.sum(), mask2.sum(), iou)
             avg += iou / 6
         print('avg: ', avg)
         print('dist: ', dist)
         print('max_req: ', max_req)
-        row.extend([avg, max_req])
+        row.extend([avg, max_req, min_req])
         rows.append(row)
         print('_______________________________________________________________________________')
     filename = f'../results/{object_id}/obs_pred.csv'
