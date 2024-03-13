@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     rows = []
 
-    object_id = 'FLASK'
+    object_id = 'EXPO'
     obj_file = '../data/objects/' + object_id + '/object_.obj'
     obj_std_poses_file = '../data/objects/' + object_id + '/standard_poses.yaml'
     obj_sampled_poses_file = '../data/objects/' + object_id + '/sampled_poses.yaml'
@@ -133,7 +133,7 @@ if __name__ == '__main__':
             rows.append(row)
 
     for k in range(3):
-        for j in range(4, 19, 5):
+        for j in range(4, 20, 5):
             avg = 0
             for i in range(2 + k * 6, 1 + (k + 1) * 6):
                 avg += rows[i][j - 2] / 6
